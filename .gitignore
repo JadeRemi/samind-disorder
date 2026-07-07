@@ -33,9 +33,6 @@ ml/runs/
 *.pt
 *.h5
 
-# Local project notes and source materials
-docs/
-
 # Misc
 *.log
 .env

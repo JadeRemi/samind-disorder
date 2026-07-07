@@ -38,7 +38,7 @@ Samind takes a different approach: **redirect attention instead of banning conte
 ```
 android/   Kotlin app: UI, accessibility service, overlay, Room storage, TFLite inference
 ml/        Python pipeline: text normalization, baseline model, training, TFLite export
-docs/      Local design notes and source materials (not tracked)
+docs/      Project brief and the ML screening task write-up
 ```
 
 ## Tech stack
@@ -136,7 +136,7 @@ the fallback lexicon. Known gaps:
 
 - True background blur of third-party apps is not possible from an overlay; a translucent
   scrim is used instead.
-- The seed dataset is small and English-first; growing it is the current priority.
+- The seed dataset is small and English-first; see [docs/ML_TEST_TASK.md](docs/ML_TEST_TASK.md) for the growth plan.
 - Chat is rule-based; an on-device LLM is out of scope for now.
 
 ## License
