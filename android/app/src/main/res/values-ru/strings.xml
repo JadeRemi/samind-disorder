@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accessibility_service_label">Монитор экрана Samind</string>
+    <string name="accessibility_service_description">Локально читает текст на экране, чтобы замечать опасный контент о РПП и мягко переключать внимание. Данные не покидают устройство.</string>
+
+    <string name="home_title">Добро пожаловать в Samind</string>
+    <string name="home_subtitle">Тихий помощник, который переключает внимание до того, как триггер закрепится.</string>
+    <string name="monitoring_on">Мониторинг включён</string>
+    <string name="monitoring_off">Мониторинг выключен</string>
+    <string name="enable_monitoring">Включить мониторинг</string>
+    <string name="disable_monitoring">Приостановить мониторинг</string>
+    <string name="open_accessibility_settings">Открыть настройки доступности</string>
+    <string name="accessibility_hint">Samind нужно разрешение специальных возможностей, чтобы читать текст на экране. Всё остаётся на устройстве.</string>
+
+    <string name="tab_home">Главная</string>
+    <string name="tab_chat">Чат</string>
+    <string name="tab_ground">Опора</string>
+    <string name="tab_stats">Статистика</string>
+
+    <string name="chat_placeholder">Расскажи, как ты…</string>
+    <string name="chat_send">Отправить</string>
+    <string name="chat_greeting">Привет, я рядом. Что у тебя на душе?</string>
+
+    <string name="grounding_title">Техники заземления</string>
+    <string name="grounding_start">Начать</string>
+    <string name="grounding_done">Мне лучше</string>
+
+    <string name="stats_title">Твой прогресс</string>
+    <string name="stats_empty">Пока ни одного перехваченного триггера. Хороший день.</string>
+    <string name="stats_intercepted">триггеров перехвачено</string>
+    <string name="stats_this_week">за неделю</string>
+
+    <string name="overlay_dismiss">Я в порядке</string>
+    <string name="overlay_open">Помоги переключиться</string>
+    <string name="mascot_content_description">Маскот Samind</string>
+
+    <string name="disclaimer">Samind — не медицинское устройство и не заменяет помощь специалиста.</string>
+</resources>

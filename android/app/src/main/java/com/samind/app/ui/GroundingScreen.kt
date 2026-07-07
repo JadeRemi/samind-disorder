@@ -1,0 +1,99 @@
+package com.samind.app.ui
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import com.samind.app.R
+import com.samind.app.content.GroundingTechnique
+import com.samind.app.content.GroundingTechniques
+
+@Composable
+fun GroundingScreen() {
+    var active by remember { mutableStateOf<GroundingTechnique?>(null) }
+
+    active?.let { technique ->
+        TechniqueRunner(technique) { active = null }
+        return
+    }
+
+    LazyColumn(
+        Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        items(GroundingTechniques.all) { technique ->
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp)) {
+                    Text(technique.title, style = MaterialTheme.typography.titleLarge)
+                    Spacer(Modifier.height(4.dp))
+                    Text(technique.summary, style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.height(12.dp))
+                    Button(onClick = { active = technique }) {
+                        Text(stringResource(R.string.grounding_start))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TechniqueRunner(technique: GroundingTechnique, onFinish: () -> Unit) {
+    var step by remember { mutableIntStateOf(0) }
+    val last = step == technique.steps.lastIndex
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(technique.title, style = MaterialTheme.typography.headlineSmall)
+        Spacer(Modifier.height(24.dp))
+        LinearProgressIndicator(
+            progress = { (step + 1f) / technique.steps.size },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(32.dp))
+        Text(
+            technique.steps[step],
+            style = MaterialTheme.typography.titleLarge,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(48.dp))
+        Button(
+            onClick = { if (last) onFinish() else step++ },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(if (last) stringResource(R.string.grounding_done) else "Next")
+        }
+        TextButton(onClick = onFinish) {
+            Text(stringResource(R.string.overlay_dismiss))
+        }
+    }
+}

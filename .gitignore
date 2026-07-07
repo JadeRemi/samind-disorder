@@ -1,0 +1,41 @@
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Android
+android/local.properties
+android/.gradle/
+android/build/
+android/app/build/
+android/app/release/
+android/captures/
+*.apk
+*.aab
+*.keystore
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+ml/artifacts/
+ml/runs/
+
+# Models
+*.tflite
+*.onnx
+*.pt
+*.h5
+
+# Local project notes and source materials
+docs/
+
+# Misc
+*.log
+.env

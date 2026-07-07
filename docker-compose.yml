@@ -1,0 +1,26 @@
+services:
+  ml:
+    build: ./ml
+    volumes:
+      - ./ml:/work
+    working_dir: /work
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+      WANDB_API_KEY: ${WANDB_API_KEY:-}
+      WANDB_PROJECT: ${WANDB_PROJECT:-samind}
+      MODEL_REGISTRY_URL: ${MODEL_REGISTRY_URL:-}
+    command: >
+      sh -c "pytest -q &&
+             python -m samind_ml.baseline --data data/seed_phrases.csv --out artifacts/ &&
+             python -m samind_ml.export_tflite --model artifacts/baseline.keras --out artifacts/trigger_classifier.tflite"
+
+  android-build:
+    build: ./android
+    volumes:
+      - ./android:/project
+      - gradle-cache:/home/gradle/.gradle
+    working_dir: /project
+    command: gradle --no-daemon assembleDebug
+
+volumes:
+  gradle-cache:

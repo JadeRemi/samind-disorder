@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Samind</string>
+    <string name="accessibility_service_label">Samind screen monitor</string>
+    <string name="accessibility_service_description">Reads text on the screen locally to spot harmful eating-disorder content and gently redirect your attention. Nothing leaves the device.</string>
+
+    <string name="home_title">Welcome to Samind</string>
+    <string name="home_subtitle">A quiet companion that redirects attention before a trigger settles.</string>
+    <string name="monitoring_on">Monitoring is on</string>
+    <string name="monitoring_off">Monitoring is off</string>
+    <string name="enable_monitoring">Enable monitoring</string>
+    <string name="disable_monitoring">Pause monitoring</string>
+    <string name="open_accessibility_settings">Open accessibility settings</string>
+    <string name="accessibility_hint">Samind needs the accessibility permission to read on-screen text. Everything stays on this device.</string>
+
+    <string name="tab_home">Home</string>
+    <string name="tab_chat">Chat</string>
+    <string name="tab_ground">Ground</string>
+    <string name="tab_stats">Stats</string>
+
+    <string name="chat_placeholder">Tell me how you feel…</string>
+    <string name="chat_send">Send</string>
+    <string name="chat_greeting">Hi, I\'m here for you. What\'s on your mind?</string>
+
+    <string name="grounding_title">Grounding techniques</string>
+    <string name="grounding_start">Start</string>
+    <string name="grounding_done">I feel better</string>
+
+    <string name="stats_title">Your progress</string>
+    <string name="stats_empty">No triggers intercepted yet. That\'s a good day.</string>
+    <string name="stats_intercepted">triggers intercepted</string>
+    <string name="stats_this_week">this week</string>
+
+    <string name="overlay_dismiss">I\'m okay</string>
+    <string name="overlay_open">Help me refocus</string>
+    <string name="mascot_content_description">Samind mascot</string>
+
+    <string name="disclaimer">Samind is not a medical device and does not replace professional help.</string>
+</resources>
