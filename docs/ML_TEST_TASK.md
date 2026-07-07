@@ -1,5 +1,7 @@
 # ML screening task — trigger classification for Samind
 
+Also available in Russian: [ML_TEST_TASK.ru.md](ML_TEST_TASK.ru.md).
+
 Scenario: a dataset of 100 labeled phrases (dangerous / safe) with slang, abbreviations
 and obfuscated spellings (symbols instead of letters).
 
