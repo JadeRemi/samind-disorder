@@ -34,11 +34,14 @@ ml/runs/
 # Collected corpora stay local; only the small English seed is tracked
 ml/data/corpus/
 
-# Models
+# Models (training outputs stay out of git; the shipped baseline asset is the
+# one exception — it's ~130 KB and must stay in lockstep with the app code.
+# The future transformer model is too big for git: LFS or release artifact.)
 *.tflite
 *.onnx
 *.pt
 *.h5
+!android/app/src/main/assets/trigger_classifier.tflite
 
 # Misc
 *.log
