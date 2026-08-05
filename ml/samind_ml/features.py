@@ -1,7 +1,5 @@
 """Hashed char-trigram featurizer, bit-compatible with TriggerClassifier.kt."""
 
-import math
-
 import numpy as np
 
 DIM = 2048

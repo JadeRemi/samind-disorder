@@ -17,6 +17,10 @@ android/captures/
 *.aab
 *.keystore
 
+# Web
+web/node_modules/
+web/dist/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -27,6 +31,9 @@ venv/
 ml/artifacts/
 ml/runs/
 
+# Collected corpora stay local; only the small English seed is tracked
+ml/data/corpus/
+
 # Models
 *.tflite
 *.onnx
@@ -36,3 +43,4 @@ ml/runs/
 # Misc
 *.log
 .env
+private/*

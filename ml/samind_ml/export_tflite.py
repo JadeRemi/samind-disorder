@@ -1,4 +1,5 @@
 import argparse
+import tempfile
 from pathlib import Path
 
 import tensorflow as tf
@@ -11,8 +12,15 @@ def main() -> None:
     parser.add_argument("--quantize", action="store_true")
     args = parser.parse_args()
 
+    # via SavedModel: from_keras_model breaks under Keras 3
     model = tf.keras.models.load_model(args.model)
-    converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    with tempfile.TemporaryDirectory() as export_dir:
+        model.export(export_dir)
+        converter = tf.lite.TFLiteConverter.from_saved_model(export_dir)
+        return convert(converter, args)
+
+
+def convert(converter, args) -> None:
     if args.quantize:
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
     blob = converter.convert()

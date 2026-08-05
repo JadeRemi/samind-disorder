@@ -15,6 +15,7 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "0.1.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         fun prop(name: String) = (project.findProperty(name) as? String).orEmpty()
         buildConfigField("String", "CHAT_API_BASE_URL", "\"${prop("samind.chatApiBaseUrl")}\"")
@@ -46,6 +47,12 @@ android {
     androidResources {
         noCompress += "tflite"
     }
+
+    sourceSets {
+        getByName("test") {
+            resources.srcDir("../../ml/tests/data")
+        }
+    }
 }
 
 dependencies {
@@ -67,4 +74,7 @@ dependencies {
     implementation("org.tensorflow:tensorflow-lite:2.14.0")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
 }

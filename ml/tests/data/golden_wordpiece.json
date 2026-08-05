@@ -1,0 +1,21 @@
+{
+  "description": "Shared WordPiece golden vectors. Consumed by ml/tests/test_wordpiece_golden.py (Python mirror) and android GoldenWordPieceTest.kt (Kotlin implementation). 'ids' is the unpadded token sequence; both suites also assert the attention mask agrees.",
+  "max_len": 16,
+  "vocab": [
+    "[PAD]", "[UNK]", "[CLS]", "[SEP]",
+    "skip", "meal", "##s", "star", "##ving",
+    "thin", "!", "un", "fast", "##ing", "water"
+  ],
+  "cases": [
+    { "text": "skip meals", "ids": [2, 4, 5, 6, 3] },
+    { "text": "starving", "ids": [2, 7, 8, 3] },
+    { "text": "thin!", "ids": [2, 9, 10, 3] },
+    { "text": "zzz", "ids": [2, 1, 3] },
+    { "text": "fasting", "ids": [2, 12, 13, 3] },
+    { "text": "water fasting", "ids": [2, 14, 12, 13, 3] },
+    { "text": "skip zzz meals", "ids": [2, 4, 1, 5, 6, 3] },
+    { "text": "thinning", "ids": [2, 1, 3] },
+    { "text": "", "ids": [2, 3] },
+    { "text": "  skip   meals  ", "ids": [2, 4, 5, 6, 3] }
+  ]
+}

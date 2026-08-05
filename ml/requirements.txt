@@ -1,9 +1,11 @@
-tensorflow-cpu==2.16.2; sys_platform == "linux"
+tensorflow-cpu==2.16.2; sys_platform == "linux" and platform_machine == "x86_64"
+tensorflow==2.16.2; sys_platform == "linux" and platform_machine == "aarch64"
 tensorflow==2.16.2; sys_platform == "darwin"
 numpy>=1.26
 pandas>=2.2
 scikit-learn>=1.4
 pytest>=8.0
+ruff>=0.5
 
 # only needed for samind_ml/train.py (DistilBERT path)
 # transformers>=4.44

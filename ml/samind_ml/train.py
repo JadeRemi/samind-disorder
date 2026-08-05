@@ -18,6 +18,7 @@ def main() -> None:
     parser.add_argument("--out", default="artifacts/distilbert/")
     parser.add_argument("--epochs", type=int, default=4)
     parser.add_argument("--lr", type=float, default=2e-5)
+    parser.add_argument("--model-name", default=MODEL_NAME)
     args = parser.parse_args()
 
     try:
@@ -38,8 +39,8 @@ def main() -> None:
     ds = Dataset.from_pandas(df[["text", "label"]]).train_test_split(test_size=0.2, seed=13)
 
     token = CONFIG.hf_token or None
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, token=token)
-    model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, num_labels=2, token=token)
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name, token=token)
+    model = AutoModelForSequenceClassification.from_pretrained(args.model_name, num_labels=2, token=token)
 
     def tokenize(batch):
         return tokenizer(batch["text"], truncation=True, max_length=128)

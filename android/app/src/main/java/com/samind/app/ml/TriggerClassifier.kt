@@ -8,19 +8,23 @@ import kotlin.math.ln
 
 data class Classification(val risky: Boolean, val score: Float)
 
+// Three tiers, best available wins: transformer (model + vocab in assets),
+// hashed-trigram dense net, lexicon rules. The app works with any of them.
 class TriggerClassifier(context: Context) {
 
-    private val interpreter: Interpreter? = try {
-        val fd = context.assets.openFd(MODEL_FILE)
-        fd.createInputStream().use { stream ->
-            val bytes = stream.readBytes()
-            val buffer = ByteBuffer.allocateDirect(bytes.size).order(ByteOrder.nativeOrder())
-            buffer.put(bytes)
-            Interpreter(buffer)
+    private val transformer: Interpreter? = loadInterpreter(context, TRANSFORMER_FILE)
+    private val tokenizer: WordPieceTokenizer? = if (transformer != null) {
+        try {
+            context.assets.open(VOCAB_FILE).bufferedReader().useLines { lines ->
+                WordPieceTokenizer(lines, SEQ_LEN)
+            }
+        } catch (e: Exception) {
+            null
         }
-    } catch (e: Exception) {
-        null
-    }
+    } else null
+
+    private val trigramModel: Interpreter? =
+        if (transformer == null) loadInterpreter(context, TRIGRAM_FILE) else null
 
     // Fallback lexicon, applied to normalized text when no model is bundled.
     private val lexicon = listOf(
@@ -46,17 +50,40 @@ class TriggerClassifier(context: Context) {
         val text = TextNormalizer.normalize(rawText)
         if (text.length < MIN_LENGTH) return Classification(false, 0f)
 
-        interpreter?.let {
-            val input = arrayOf(features(text))
-            val output = arrayOf(floatArrayOf(0f))
-            it.run(input, output)
-            val score = output[0][0]
+        transformerScore(text)?.let { score ->
+            return Classification(score >= MODEL_THRESHOLD, score)
+        }
+        trigramScore(text)?.let { score ->
             return Classification(score >= MODEL_THRESHOLD, score)
         }
 
         val hits = lexicon.count { it.containsMatchIn(text) }
         val score = (hits / 2f).coerceAtMost(1f)
         return Classification(hits > 0, score)
+    }
+
+    private fun transformerScore(text: String): Float? {
+        val model = transformer ?: return null
+        val enc = (tokenizer ?: return null).encode(text.take(MAX_CHARS))
+        val inputs = arrayOf<Any>(arrayOf(enc.inputIds), arrayOf(enc.attentionMask))
+        val probabilities = Array(1) { FloatArray(2) }
+        return try {
+            model.runForMultipleInputsOutputs(inputs, mapOf(0 to probabilities))
+            probabilities[0][1]
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun trigramScore(text: String): Float? {
+        val model = trigramModel ?: return null
+        val output = arrayOf(floatArrayOf(0f))
+        return try {
+            model.run(arrayOf(features(text)), output)
+            output[0][0]
+        } catch (e: Exception) {
+            null
+        }
     }
 
     // Must match samind_ml/features.py: hashed char trigrams, log1p counts.
@@ -71,14 +98,30 @@ class TriggerClassifier(context: Context) {
         return v
     }
 
+    private fun loadInterpreter(context: Context, assetName: String): Interpreter? = try {
+        context.assets.openFd(assetName).createInputStream().use { stream ->
+            val bytes = stream.readBytes()
+            val buffer = ByteBuffer.allocateDirect(bytes.size).order(ByteOrder.nativeOrder())
+            buffer.put(bytes)
+            Interpreter(buffer)
+        }
+    } catch (e: Exception) {
+        null
+    }
+
     fun close() {
-        interpreter?.close()
+        transformer?.close()
+        trigramModel?.close()
     }
 
     companion object {
-        private const val MODEL_FILE = "trigger_classifier.tflite"
+        private const val TRANSFORMER_FILE = "trigger_transformer.tflite"
+        private const val VOCAB_FILE = "vocab.txt"
+        private const val TRIGRAM_FILE = "trigger_classifier.tflite"
         private const val FEATURE_DIM = 2048
+        private const val SEQ_LEN = 128
         private const val MODEL_THRESHOLD = 0.75f
         private const val MIN_LENGTH = 12
+        private const val MAX_CHARS = 500
     }
 }

@@ -38,6 +38,7 @@ Samind takes a different approach: **redirect attention instead of banning conte
 ```
 android/   Kotlin app: UI, accessibility service, overlay, Room storage, TFLite inference
 ml/        Python pipeline: text normalization, baseline model, training, TFLite export
+web/       Browser version: same screens and intervention UX over a simulated feed
 docs/      Project brief and the ML screening task write-up
 ```
 
@@ -87,13 +88,46 @@ cd ml
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
+python -m samind_ml.report --data data/seed_phrases.csv       # dataset quality report
+python -m samind_ml.split --data data/seed_phrases.csv        # persisted train/val/test split
 python -m samind_ml.baseline --data data/seed_phrases.csv --out artifacts/
+python -m samind_ml.baseline --data data/seed_phrases.csv --model logreg   # CV reference
 python -m samind_ml.export_tflite --model artifacts/baseline.keras --out artifacts/trigger_classifier.tflite
 pytest
 ```
 
+Training runs emit `artifacts/baseline_report.md` with metrics, a threshold sweep and
+the worst errors. `samind_ml/sheets_import.py` maps a CSV export of the shared trigger
+corpus into the dataset schema.
+
+More tooling:
+
+```sh
+python -m samind_ml.evaluate --predictions preds.csv   # full report for any model's scores
+python -m samind_ml.bench --model artifacts/trigger_classifier.tflite   # desktop latency check
+ruff check .                                           # lint
+```
+
+Transformer fine-tuning is scripted for Colab: `notebooks/train_colab.ipynb` (train →
+int8 TFLite → parity gate → artifacts to Drive). Conversion and parity also run locally
+via `samind_ml/export_transformer.py` and `samind_ml/parity.py` with the optional deps
+enabled. WordPiece tokenization is pinned across languages by shared golden vectors
+(`tests/data/golden_wordpiece.json`), exercised by both the Python and the Android test
+suites.
+
 `samind_ml/train.py` contains the DistilBERT fine-tuning path used once the corpus is
 large enough; the baseline is what ships in the prototype.
+
+### Web version
+
+The browser build of the app (layout preview + simulated-feed demo of the
+intervention; see `docs/WEB_VERSION.md`):
+
+```sh
+cd web
+npm install
+npm run dev    # http://localhost:5173 — capped runtime, clean exit guaranteed
+```
 
 ### Docker
 
@@ -138,6 +172,8 @@ the fallback lexicon. Known gaps:
   scrim is used instead.
 - The seed dataset is small and English-first; see [docs/ML_TEST_TASK.md](docs/ML_TEST_TASK.md) for the growth plan.
 - Chat is rule-based; an on-device LLM is out of scope for now.
+
+Current next steps live at the top of [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## License
 
