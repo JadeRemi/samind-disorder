@@ -4,14 +4,7 @@ The notebook is `ml/notebooks/train_colab.ipynb`, uploaded to your Google Drive.
 
 ## Before the first run (once)
 
-1. Get the code into Colab's reach — the repo is **private**, so pick one:
-   - **Token (recommended):** GitHub → Settings → Developer settings → Fine-grained
-     tokens → new token, only this repo, only "Contents: read". The notebook asks for
-     it at runtime (paste, not stored anywhere).
-   - **Zip fallback:** zip the repo folder and upload it to Drive as
-     `MyDrive/samind/repo.zip`:
-     `cd .. && zip -rq repo.zip samind-disorder -x "*.venv/*" "*node_modules/*" "*.git/*"`
-     Then just press Enter at the token prompt.
+1. The repo is public on GitHub — the notebook clones it by itself, nothing to set up.
 2. Put the dataset in Drive: `MyDrive/samind/corpus.csv` (columns: `text,label`).
 
 ## Every run
@@ -34,8 +27,7 @@ Everything lands in Drive at `MyDrive/samind/artifacts/`:
 
 - **"NO GPU"** — you skipped step 2, change the runtime type.
 - **"need 1000+ examples"** — the dataset is still too small; keep collecting. This stop is intentional.
-- **Clone fails** — wrong/expired token, or the repo isn't pushed yet. Either fix the
-  token or use the zip fallback (press Enter at the prompt).
+- **Clone fails** — GitHub hiccup or the repo was made private; re-run the cell.
 - **Parity gate fails** — don't ship the model; something broke in conversion, bring
   the report back for debugging.
 

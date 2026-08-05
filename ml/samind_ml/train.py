@@ -5,6 +5,10 @@ Export to TFLite goes through ONNX (or a TF checkpoint converted directly).
 """
 
 import argparse
+import os
+
+# torch-only; stops transformers from touching TF/Keras even when installed
+os.environ.setdefault("USE_TF", "0")
 
 from .config import CONFIG
 from .dataset import augment, load
@@ -27,6 +31,7 @@ def main() -> None:
         from transformers import (
             AutoModelForSequenceClassification,
             AutoTokenizer,
+            DataCollatorWithPadding,
             Trainer,
             TrainingArguments,
         )
@@ -71,6 +76,7 @@ def main() -> None:
         ),
         train_dataset=ds["train"],
         eval_dataset=ds["test"],
+        data_collator=DataCollatorWithPadding(tokenizer),
         compute_metrics=metrics,
     )
     trainer.train()
