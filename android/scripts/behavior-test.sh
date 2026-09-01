@@ -15,13 +15,22 @@ TRIGGER_TEXT="skip dinner wake up thinner starving is fine"
 
 mkdir -p "$OUT"
 
-# always keep the full device log; on a crash, surface it in the CI output too
+# on ANY exit, print what the device actually said — never fail blind
 collect_logs() {
   adb logcat -d > "$OUT/logcat_full.txt" 2>/dev/null || true
+  echo "===== app / accessibility log ====="
+  grep -iE "samind|AccessibilityManagerService|AndroidRuntime" "$OUT/logcat_full.txt" \
+    | tail -40 || echo "(no matching lines)"
   if grep -q "FATAL EXCEPTION" "$OUT/logcat_full.txt"; then
-    echo "===== CRASH FOUND IN LOGCAT ====="
+    echo "===== CRASH ====="
     grep -A 30 "FATAL EXCEPTION" "$OUT/logcat_full.txt" | head -60
   fi
+  echo "===== accessibility state ====="
+  adb shell settings get secure enabled_accessibility_services || true
+  adb shell settings get secure accessibility_enabled || true
+  adb shell dumpsys accessibility 2>/dev/null | grep -iA3 samind | head -20 || true
+  echo "===== monitoring pref on device ====="
+  adb shell "run-as $PKG cat shared_prefs/samind_prefs.xml" 2>/dev/null || echo "(pref file unreadable)"
 }
 trap collect_logs EXIT
 
@@ -56,14 +65,31 @@ sleep 4
 printf '<?xml version="1.0" encoding="utf-8" standalone="yes" ?>\n<map><boolean name="monitoring_enabled" value="true" /></map>\n' \
   | adb shell "run-as $PKG sh -c 'mkdir -p shared_prefs; cat > shared_prefs/samind_prefs.xml'"
 adb shell am force-stop "$PKG"
+adb shell "run-as $PKG cat shared_prefs/samind_prefs.xml" | grep -q 'value="true"' \
+  || { echo "FAIL: monitoring pref not written"; exit 1; }
+echo "pref written ok"
 
 echo "=== enable accessibility service"
 adb logcat -c || true
 adb shell settings put secure enabled_accessibility_services "$SERVICE"
 adb shell settings put secure accessibility_enabled 1
-sleep 6
+
+# poll: service binding time varies wildly on CI emulators
+BASELINE=0
+for attempt in 1 2 3; do
+  deadline=$((SECONDS + 30))
+  while [ $SECONDS -lt "$deadline" ]; do
+    BASELINE=$(overlay_windows)
+    [ "$BASELINE" -ge 1 ] && break
+    sleep 3
+  done
+  [ "$BASELINE" -ge 1 ] && break
+  echo "attempt $attempt: no mascot yet, re-asserting settings"
+  adb shell settings put secure enabled_accessibility_services "$SERVICE"
+  adb shell settings put secure accessibility_enabled 1
+done
+
 snap 1_service_enabled
-BASELINE=$(overlay_windows)
 echo "baseline samind windows (mascot expected): $BASELINE"
 [ "$BASELINE" -ge 1 ] || { echo "FAIL: mascot window absent — service not running"; exit 1; }
 
