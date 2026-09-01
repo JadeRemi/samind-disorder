@@ -2,6 +2,7 @@ package com.samind.app.service
 
 import android.accessibilityservice.AccessibilityService
 import android.os.SystemClock
+import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import com.samind.app.SamindApp
@@ -49,17 +50,22 @@ class ScreenReaderService : AccessibilityService() {
         lastAnalyzedHash = hash
 
         scope.launch {
-            val result = classifier.classify(text)
-            if (result.risky) {
-                cooldownUntil = SystemClock.elapsedRealtime() + COOLDOWN_MS
-                SamindApp.instance.database.triggerEvents().insert(
-                    TriggerEvent(
-                        timestamp = System.currentTimeMillis(),
-                        sourcePackage = source,
-                        score = result.score,
+            try {
+                val result = classifier.classify(text)
+                if (result.risky) {
+                    cooldownUntil = SystemClock.elapsedRealtime() + COOLDOWN_MS
+                    overlay.showQuestion()
+                    SamindApp.instance.database.triggerEvents().insert(
+                        TriggerEvent(
+                            timestamp = System.currentTimeMillis(),
+                            sourcePackage = source,
+                            score = result.score,
+                        )
                     )
-                )
-                overlay.showQuestion()
+                }
+            } catch (e: Exception) {
+                // one bad event must never kill the monitoring service
+                Log.e(TAG, "trigger handling failed", e)
             }
         }
     }
@@ -87,6 +93,7 @@ class ScreenReaderService : AccessibilityService() {
     }
 
     companion object {
+        private const val TAG = "ScreenReaderService"
         private const val COOLDOWN_MS = 45_000L
         private const val MAX_TEXT = 4_000
         private val IGNORED_PACKAGES = setOf(

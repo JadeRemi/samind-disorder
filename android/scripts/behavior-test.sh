@@ -15,6 +15,16 @@ TRIGGER_TEXT="skip dinner wake up thinner starving is fine"
 
 mkdir -p "$OUT"
 
+# always keep the full device log; on a crash, surface it in the CI output too
+collect_logs() {
+  adb logcat -d > "$OUT/logcat_full.txt" 2>/dev/null || true
+  if grep -q "FATAL EXCEPTION" "$OUT/logcat_full.txt"; then
+    echo "===== CRASH FOUND IN LOGCAT ====="
+    grep -A 30 "FATAL EXCEPTION" "$OUT/logcat_full.txt" | head -60
+  fi
+}
+trap collect_logs EXIT
+
 snap() { adb exec-out screencap -p > "$OUT/$1.png" || true; }
 
 overlay_windows() {
@@ -48,6 +58,7 @@ printf '<?xml version="1.0" encoding="utf-8" standalone="yes" ?>\n<map><boolean 
 adb shell am force-stop "$PKG"
 
 echo "=== enable accessibility service"
+adb logcat -c || true
 adb shell settings put secure enabled_accessibility_services "$SERVICE"
 adb shell settings put secure accessibility_enabled 1
 sleep 6
