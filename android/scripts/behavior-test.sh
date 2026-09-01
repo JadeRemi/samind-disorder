@@ -36,8 +36,14 @@ trap collect_logs EXIT
 
 snap() { adb exec-out screencap -p > "$OUT/$1.png" || true; }
 
+# count real windows only — "Window{...}" records, not package lists elsewhere
+# in the dump (that mistake made every earlier verdict meaningless)
 overlay_windows() {
-  adb shell dumpsys window windows | grep -c "$PKG" || true
+  adb shell dumpsys window windows | grep -E "Window\{" | grep -c "$PKG" || true
+}
+
+service_bound() {
+  adb shell dumpsys accessibility 2>/dev/null | grep -q "ScreenReaderService"
 }
 
 wait_for_delta() { # wait_for_delta <baseline> <seconds> -> prints final count
@@ -71,26 +77,32 @@ echo "pref written ok"
 
 echo "=== enable accessibility service"
 adb logcat -c || true
+# Android 13+ blocks accessibility for sideloaded apps unless this op is allowed;
+# without it the settings below silently revert to null/0
+adb shell appops set "$PKG" ACCESS_RESTRICTED_SETTINGS allow || true
 adb shell settings put secure enabled_accessibility_services "$SERVICE"
 adb shell settings put secure accessibility_enabled 1
+sleep 5
 
-# poll: service binding time varies wildly on CI emulators
+STATE=$(adb shell settings get secure enabled_accessibility_services | tr -d '\r')
+echo "enabled_accessibility_services = $STATE"
+case "$STATE" in
+  *ScreenReaderService*) ;;
+  *) echo "FAIL: the system rejected the accessibility setting (restricted settings?)"; exit 1 ;;
+esac
+
+echo "=== wait for the service to bind and show the mascot"
 BASELINE=0
-for attempt in 1 2 3; do
-  deadline=$((SECONDS + 30))
-  while [ $SECONDS -lt "$deadline" ]; do
-    BASELINE=$(overlay_windows)
-    [ "$BASELINE" -ge 1 ] && break
-    sleep 3
-  done
+deadline=$((SECONDS + 60))
+while [ $SECONDS -lt "$deadline" ]; do
+  BASELINE=$(overlay_windows)
   [ "$BASELINE" -ge 1 ] && break
-  echo "attempt $attempt: no mascot yet, re-asserting settings"
-  adb shell settings put secure enabled_accessibility_services "$SERVICE"
-  adb shell settings put secure accessibility_enabled 1
+  sleep 3
 done
 
 snap 1_service_enabled
-echo "baseline samind windows (mascot expected): $BASELINE"
+service_bound && echo "service is bound" || echo "warning: service not listed in dumpsys accessibility"
+echo "baseline samind windows (mascot expected >= 1): $BASELINE"
 [ "$BASELINE" -ge 1 ] || { echo "FAIL: mascot window absent — service not running"; exit 1; }
 
 echo "=== negative: safe text in a foreign app"
