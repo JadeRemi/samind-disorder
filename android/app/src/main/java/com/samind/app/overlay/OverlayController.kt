@@ -1,10 +1,13 @@
 package com.samind.app.overlay
 
 import android.accessibilityservice.AccessibilityService
+import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -18,7 +21,20 @@ import com.samind.app.content.DistractionQuestions
 
 class OverlayController(private val service: AccessibilityService) {
 
-    private val windowManager = service.getSystemService(WindowManager::class.java)
+    // API 30+ requires a window context for TYPE_ACCESSIBILITY_OVERLAY; the plain
+    // service context yields an invalid token and addView throws BadTokenException
+    private val overlayContext: Context =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            service.createWindowContext(
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                null,
+            )
+        } else {
+            service
+        }
+
+    private val windowManager = overlayContext.getSystemService(WindowManager::class.java)
+    private val inflater = LayoutInflater.from(overlayContext)
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private var mascotView: View? = null
@@ -29,7 +45,7 @@ class OverlayController(private val service: AccessibilityService) {
 
     fun showMascot() = mainHandler.post {
         if (mascotView != null) return@post
-        val view = LayoutInflater.from(service).inflate(R.layout.overlay_mascot, null)
+        val view = inflater.inflate(R.layout.overlay_mascot, null)
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -43,13 +59,18 @@ class OverlayController(private val service: AccessibilityService) {
         }
         makeDraggable(view, params)
         view.setOnClickListener { openApp("chat") }
-        windowManager.addView(view, params)
-        mascotView = view
+        // an overlay failure must never take the monitoring service down with it
+        try {
+            windowManager.addView(view, params)
+            mascotView = view
+        } catch (e: Exception) {
+            Log.e(TAG, "could not add mascot overlay", e)
+        }
     }
 
     fun showQuestion() = mainHandler.post {
         if (questionView != null) return@post
-        val view = LayoutInflater.from(service).inflate(R.layout.overlay_question, null)
+        val view = inflater.inflate(R.layout.overlay_question, null)
         view.findViewById<TextView>(R.id.question_text).text = DistractionQuestions.random()
         view.findViewById<Button>(R.id.dismiss_button).setOnClickListener { hideQuestion() }
         view.findViewById<Button>(R.id.open_button).setOnClickListener {
@@ -63,17 +84,21 @@ class OverlayController(private val service: AccessibilityService) {
             0,
             PixelFormat.TRANSLUCENT,
         )
-        windowManager.addView(view, params)
-        questionView = view
+        try {
+            windowManager.addView(view, params)
+            questionView = view
+        } catch (e: Exception) {
+            Log.e(TAG, "could not add question overlay", e)
+        }
     }
 
     fun hideQuestion() = mainHandler.post {
-        questionView?.let { windowManager.removeView(it) }
+        questionView?.let { runCatching { windowManager.removeView(it) } }
         questionView = null
     }
 
     fun hideMascot() = mainHandler.post {
-        mascotView?.let { windowManager.removeView(it) }
+        mascotView?.let { runCatching { windowManager.removeView(it) } }
         mascotView = null
     }
 
@@ -88,6 +113,10 @@ class OverlayController(private val service: AccessibilityService) {
             putExtra(MainActivity.EXTRA_DESTINATION, destination)
         }
         service.startActivity(intent)
+    }
+
+    private companion object {
+        const val TAG = "OverlayController"
     }
 
     private fun makeDraggable(view: View, params: WindowManager.LayoutParams) {
