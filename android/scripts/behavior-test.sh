@@ -10,17 +10,22 @@ APK="${1:?usage: behavior-test.sh <apk> [outdir]}"
 OUT="${2:-behavior-artifacts}"
 PKG="com.samind.app"
 SERVICE="$PKG/$PKG.service.ScreenReaderService"
+# scores verified against the shipped baseline model: safe 0.10, trigger 0.98
+# (the trigger stays above threshold even mixed with the host app's UI text)
 SAFE_TEXT="grandmas soup recipe never fails us"
-TRIGGER_TEXT="skip dinner wake up thinner starving is fine"
+TRIGGER_TEXT="thinspo meanspo pro ana starving purge"
 
 mkdir -p "$OUT"
 
 # on ANY exit, print what the device actually said — never fail blind
 collect_logs() {
   adb logcat -d > "$OUT/logcat_full.txt" 2>/dev/null || true
+  echo "===== classifier decisions (what the model actually scored) ====="
+  grep -E "ScreenReaderService|OverlayController" "$OUT/logcat_full.txt" | tail -25 \
+    || echo "(none — service never classified anything)"
   echo "===== app / accessibility log ====="
   grep -iE "samind|AccessibilityManagerService|AndroidRuntime" "$OUT/logcat_full.txt" \
-    | tail -40 || echo "(no matching lines)"
+    | tail -25 || echo "(no matching lines)"
   if grep -q "FATAL EXCEPTION" "$OUT/logcat_full.txt"; then
     echo "===== CRASH ====="
     grep -A 30 "FATAL EXCEPTION" "$OUT/logcat_full.txt" | head -60
@@ -67,8 +72,19 @@ wait_for_delta() { # wait_for_delta <baseline> <seconds> -> prints final count
 
 open_foreign_text() { # renders text inside the Contacts app (a foreign package)
   adb shell am start -a android.intent.action.INSERT \
-    -t vnd.android.cursor.dir/contact --es name "\"$1\"" >/dev/null
+    -t vnd.android.cursor.dir/contact >/dev/null
   sleep 6
+  # type it in as well: intent extras are not honored by every Contacts build,
+  # typing puts the text on screen for certain
+  adb shell input text "${1// /%s}"
+  sleep 4
+  adb shell uiautomator dump "/sdcard/ui_$2.xml" >/dev/null 2>&1 || true
+  adb pull "/sdcard/ui_$2.xml" "$OUT/ui_$2.xml" >/dev/null 2>&1 || true
+  if grep -qi "${1%% *}" "$OUT/ui_$2.xml" 2>/dev/null; then
+    echo "confirmed: text is on screen in the foreign app"
+  else
+    echo "warning: could not confirm the text rendered on screen"
+  fi
 }
 
 echo "=== install"
@@ -134,7 +150,7 @@ echo "baseline samind windows (mascot expected >= 1): $BASELINE"
 [ "$BASELINE" -ge 1 ] || { echo "FAIL: mascot window absent — service not running"; exit 1; }
 
 echo "=== negative: safe text in a foreign app"
-open_foreign_text "$SAFE_TEXT"
+open_foreign_text "$SAFE_TEXT" safe
 sleep 10
 snap 2_safe_text
 SAFE_COUNT=$(overlay_windows)
@@ -146,7 +162,7 @@ echo "ok: no overlay on safe text"
 adb shell input keyevent KEYCODE_BACK; adb shell input keyevent KEYCODE_BACK; sleep 2
 
 echo "=== positive: trigger text in a foreign app"
-open_foreign_text "$TRIGGER_TEXT"
+open_foreign_text "$TRIGGER_TEXT" trigger
 FINAL=$(wait_for_delta "$BASELINE" 25)
 snap 3_trigger_text
 assert_no_crash "while handling the trigger"

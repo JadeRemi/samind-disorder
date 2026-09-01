@@ -48,16 +48,22 @@ class ScreenReaderService : AccessibilityService() {
         if (now < cooldownUntil || overlay.isQuestionShowing) return
 
         val root = rootInActiveWindow ?: return
-        val text = collectText(root)
-        if (text.length < 12) return
+        val pieces = collectText(root)
+        val chunks = chunk(pieces)
+        if (chunks.isEmpty()) return
 
-        val hash = text.hashCode()
+        val hash = chunks.hashCode()
         if (hash == lastAnalyzedHash) return
         lastAnalyzedHash = hash
 
         scope.launch {
             try {
-                val result = classifier.classify(text)
+                // per-chunk, worst score wins: scoring the whole screen as one blob
+                // lets surrounding UI text dilute a real trigger below the threshold
+                val result = chunks
+                    .map { classifier.classify(it) }
+                    .maxByOrNull { it.score } ?: return@launch
+                Log.d(TAG, "score=${result.score} risky=${result.risky} pkg=$source chunks=${chunks.size}")
                 if (result.risky) {
                     cooldownUntil = SystemClock.elapsedRealtime() + COOLDOWN_MS
                     overlay.showQuestion()
@@ -76,15 +82,36 @@ class ScreenReaderService : AccessibilityService() {
         }
     }
 
-    private fun collectText(node: AccessibilityNodeInfo, budget: StringBuilder = StringBuilder()): String {
-        if (budget.length > MAX_TEXT) return budget.toString()
-        node.text?.let { budget.append(it).append(' ') }
+    private fun collectText(
+        node: AccessibilityNodeInfo,
+        out: MutableList<String> = mutableListOf(),
+    ): MutableList<String> {
+        if (out.sumOf { it.length } > MAX_TEXT) return out
+        node.text?.toString()?.trim()?.takeIf { it.isNotEmpty() }?.let { out.add(it) }
         for (i in 0 until node.childCount) {
             val child = node.getChild(i) ?: continue
-            collectText(child, budget)
+            collectText(child, out)
             child.recycle()
         }
-        return budget.toString()
+        return out
+    }
+
+    // merge consecutive fragments into a few sentence-sized chunks, so one post's
+    // text stays together while unrelated UI labels don't drown it
+    private fun chunk(pieces: List<String>): List<String> {
+        val chunks = mutableListOf<String>()
+        val current = StringBuilder()
+        for (piece in pieces) {
+            if (current.isNotEmpty() && current.length + piece.length > CHUNK_CHARS) {
+                chunks.add(current.toString())
+                current.clear()
+                if (chunks.size >= MAX_CHUNKS) break
+            }
+            if (current.isNotEmpty()) current.append(' ')
+            current.append(piece)
+        }
+        if (current.isNotEmpty() && chunks.size < MAX_CHUNKS) chunks.add(current.toString())
+        return chunks.filter { it.length >= MIN_CHUNK_CHARS }
     }
 
     override fun onInterrupt() {
@@ -102,6 +129,9 @@ class ScreenReaderService : AccessibilityService() {
         private const val TAG = "ScreenReaderService"
         private const val COOLDOWN_MS = 45_000L
         private const val MAX_TEXT = 4_000
+        private const val CHUNK_CHARS = 200
+        private const val MIN_CHUNK_CHARS = 12
+        private const val MAX_CHUNKS = 8
         private val IGNORED_PACKAGES = setOf(
             "com.android.systemui",
             "com.android.settings",
