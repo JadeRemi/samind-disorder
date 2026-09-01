@@ -8,6 +8,7 @@ import android.view.accessibility.AccessibilityNodeInfo
 import com.samind.app.SamindApp
 import com.samind.app.data.Prefs
 import com.samind.app.data.db.TriggerEvent
+import com.samind.app.ml.TextChunker
 import com.samind.app.ml.TriggerClassifier
 import com.samind.app.overlay.OverlayController
 import kotlinx.coroutines.CoroutineScope
@@ -48,9 +49,10 @@ class ScreenReaderService : AccessibilityService() {
         if (now < cooldownUntil || overlay.isQuestionShowing) return
 
         val root = rootInActiveWindow ?: return
-        val pieces = collectText(root)
-        val chunks = chunk(pieces)
+        val chunking = TextChunker.chunk(collectText(root))
+        val chunks = chunking.chunks
         if (chunks.isEmpty()) return
+        if (chunking.truncated) Log.w(TAG, "screen text truncated to ${chunks.size} chunks")
 
         val hash = chunks.hashCode()
         if (hash == lastAnalyzedHash) return
@@ -96,23 +98,6 @@ class ScreenReaderService : AccessibilityService() {
         return out
     }
 
-    // merge consecutive fragments into a few sentence-sized chunks, so one post's
-    // text stays together while unrelated UI labels don't drown it
-    private fun chunk(pieces: List<String>): List<String> {
-        val chunks = mutableListOf<String>()
-        val current = StringBuilder()
-        for (piece in pieces) {
-            if (current.isNotEmpty() && current.length + piece.length > CHUNK_CHARS) {
-                chunks.add(current.toString())
-                current.clear()
-                if (chunks.size >= MAX_CHUNKS) break
-            }
-            if (current.isNotEmpty()) current.append(' ')
-            current.append(piece)
-        }
-        if (current.isNotEmpty() && chunks.size < MAX_CHUNKS) chunks.add(current.toString())
-        return chunks.filter { it.length >= MIN_CHUNK_CHARS }
-    }
 
     override fun onInterrupt() {
         overlay.hideAll()
@@ -129,9 +114,6 @@ class ScreenReaderService : AccessibilityService() {
         private const val TAG = "ScreenReaderService"
         private const val COOLDOWN_MS = 45_000L
         private const val MAX_TEXT = 4_000
-        private const val CHUNK_CHARS = 200
-        private const val MIN_CHUNK_CHARS = 12
-        private const val MAX_CHUNKS = 8
         private val IGNORED_PACKAGES = setOf(
             "com.android.systemui",
             "com.android.settings",
