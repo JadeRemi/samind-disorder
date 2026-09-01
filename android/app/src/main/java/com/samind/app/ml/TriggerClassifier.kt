@@ -51,10 +51,10 @@ class TriggerClassifier(context: Context) {
         if (text.length < MIN_LENGTH) return Classification(false, 0f)
 
         transformerScore(text)?.let { score ->
-            return Classification(score >= MODEL_THRESHOLD, score)
+            return Classification(score >= TRANSFORMER_THRESHOLD, score)
         }
         trigramScore(text)?.let { score ->
-            return Classification(score >= MODEL_THRESHOLD, score)
+            return Classification(score >= TRIGRAM_THRESHOLD, score)
         }
 
         val hits = lexicon.count { it.containsMatchIn(text) }
@@ -120,7 +120,9 @@ class TriggerClassifier(context: Context) {
         private const val TRIGRAM_FILE = "trigger_classifier.tflite"
         private const val FEATURE_DIM = 2048
         private const val SEQ_LEN = 128
-        private const val MODEL_THRESHOLD = 0.75f
+        // per-tier: from each model's evaluation report (threshold sweep)
+        private const val TRANSFORMER_THRESHOLD = 0.3f
+        private const val TRIGRAM_THRESHOLD = 0.7f
         private const val MIN_LENGTH = 12
         private const val MAX_CHARS = 500
     }

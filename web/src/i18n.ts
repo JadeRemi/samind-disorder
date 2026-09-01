@@ -7,7 +7,7 @@ const STRINGS = {
   en: {
     appName: "Samind",
     tabHome: "Home",
-    tabFeed: "Feed demo",
+    tabFeed: "Feed",
     tabChat: "Chat",
     tabGround: "Ground",
     tabStats: "Stats",
@@ -38,7 +38,7 @@ const STRINGS = {
   ru: {
     appName: "Samind",
     tabHome: "Главная",
-    tabFeed: "Демо-лента",
+    tabFeed: "Лента",
     tabChat: "Чат",
     tabGround: "Опора",
     tabStats: "Статистика",

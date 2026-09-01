@@ -12,4 +12,4 @@ if lsof -nP -iTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1; then
 fi
 
 echo "dev server: http://localhost:$PORT (hard cap: ${MAX_MINUTES} min)"
-guard_run "$((MAX_MINUTES * 60))" node node_modules/vite/bin/vite.js --port "$PORT" --strictPort
+guard_run "$((MAX_MINUTES * 60))" node node_modules/vite/bin/vite.js --port "$PORT" --strictPort --open

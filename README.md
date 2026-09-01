@@ -125,8 +125,8 @@ intervention; see `docs/WEB_VERSION.md`):
 
 ```sh
 cd web
-npm install
-npm run dev    # http://localhost:5173 — capped runtime, clean exit guaranteed
+yarn install
+yarn dev    # opens the browser; capped runtime, clean exit guaranteed
 ```
 
 ### Docker

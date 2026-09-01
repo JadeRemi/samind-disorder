@@ -47,6 +47,14 @@ function render(): void {
   views[tab](body);
 }
 
+const TAB_ICONS: Record<Tab, string> = {
+  home: `<path d="M4 11l8-7 8 7v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 20z"/><path d="M9.5 21.5v-7h5v7"/>`,
+  feed: `<rect x="4" y="4" width="16" height="6.5" rx="2"/><rect x="4" y="13.5" width="16" height="6.5" rx="2"/>`,
+  chat: `<path d="M20 12a8 8 0 1 0-3.5 6.6L20 20l-.9-3.4A7.9 7.9 0 0 0 20 12z"/>`,
+  ground: `<path d="M12 21V10"/><path d="M12 12C7 11 4.5 8 4.5 3.5 9.5 3.5 12 6.5 12 11z"/><path d="M12 15c4-.7 6.5-3.2 6.5-7-4 0-6.5 2.2-6.5 6z"/>`,
+  stats: `<path d="M5 20V13"/><path d="M12 20V8"/><path d="M19 20V4"/>`,
+};
+
 function tabbar(): HTMLElement {
   const bar = el(`<nav class="tabbar"></nav>`);
   const items: Array<[Tab, string]> = [
@@ -54,7 +62,12 @@ function tabbar(): HTMLElement {
     ["ground", t("tabGround")], ["stats", t("tabStats")],
   ];
   for (const [id, label] of items) {
-    const btn = el(`<button class="tab ${tab === id ? "active" : ""}">${label}</button>`);
+    const btn = el(
+      `<button class="tab ${tab === id ? "active" : ""}" aria-label="${label}">
+         <svg viewBox="0 0 24 24" aria-hidden="true">${TAB_ICONS[id]}</svg>
+         <span>${label}</span>
+       </button>`,
+    );
     btn.onclick = () => { tab = id; render(); };
     bar.append(btn);
   }

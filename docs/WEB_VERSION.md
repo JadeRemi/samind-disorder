@@ -57,19 +57,27 @@ reaping), `cpus: 1.0`, `mem_limit: 512m`. CI jobs carry `timeout-minutes` caps.
 
 ```sh
 cd web
-npm install          # once
-npm run dev          # http://localhost:5173, capped, Ctrl+C-safe
-npm test             # vitest: normalizer parity cases
-npm run build        # capped; output in dist/
-npm run preview      # serve dist/ locally, capped
+yarn install         # once
+yarn dev             # opens the browser; capped, Ctrl+C-safe
+yarn test            # vitest: normalizer parity cases
+yarn build           # capped; output in dist/
+yarn preview         # serve dist/ locally, capped
 
 # or containerized (serves the built app on :8080)
 docker compose up web
 ```
 
-## Known limitations
+## Known limitations and remaining work
 
 - The classifier is the lexicon tier; TFLite-to-web model inference (TFJS or ONNX
   Runtime Web) is a later step once the trained model stabilizes.
-- Stats live in `localStorage` (per-browser, per-session semantics).
+- Stats live in `localStorage` (per-browser, per-session semantics); charts not built.
 - The demo feed is static sample content — extend `src/content.ts` to add posts.
+- The chat is the rule-based v1 engine (crisis patterns → topic rules → fallbacks) —
+  deliberately conservative, not an LLM. Its routing has no unit tests yet
+  (the normalizer does).
+- No settings screen yet — the language toggle lives on Home.
+- Grounding techniques are text-only; the design board calls for GIF/animation slots.
+- Layout is regression-checked with `scripts/visual-check.mjs` (drives installed
+  Chrome, measures the frame on every tab, saves screenshots) — run it against a
+  preview server after any styling change.

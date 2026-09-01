@@ -1,41 +1,80 @@
 # Samind ML roadmap — dataset → baseline → transformer
 
-## Next steps (late July 2026 — no phone available)
+## Status (2026-09-01) — real model shipped
 
-**Now:**
+- Corpus v2 landed: 6,041 labeled forum rows (5,650 unique, 56/44 balance, `coded`
+  slice column). Imported via `samind_ml/json_import.py`; merged variant kept as
+  `merged_v2.csv` for a short-phrase/EN fallback experiment.
+- **Real transformer trained and shipped**: DistilBERT-multilingual, test F1 0.982,
+  PR-AUC 0.997, R@FPR=1% 0.980, ECE 0.015; coded slice within 0.2pp of plain.
+  All task-card quality gates pass. Report: `private/artifacts/transformer_report.md`.
+- Model (130 MB) + vocab installed in app assets; golden vectors regenerated and
+  green; per-tier thresholds in `TriggerClassifier.kt` (transformer 0.3, baseline 0.7).
+- Known misses: model size 130 MB vs the 100 MB card target (vocab trimming or a
+  smaller candidate later); test split is same-distribution forum text — real-screen
+  quality is what the pilot measures. 814 rows (13%) have label/category
+  contradictions — flagged to annotators.
 
-1. Push to GitHub — CI compiles the Android app for the first time (unit tests + debug
-   APK as an artifact), plus the ML and web suites.
-2. Train the baseline on the imported corpus and ship it into `assets/` — seconds of
-   compute, fully scripted (import → split → baseline → export).
-3. Fix whatever the first CI run finds in the Kotlin (it has never been compiled).
+## Status (2026-08-05) — what's done
 
-**Verification without a phone:**
+- CI fully green: Android compiles (APK artifact verified: code + baseline model +
+  vocab inside), ML and web suites pass.
+- Baseline model trained, converted (in Docker), installed in the app.
+- Colab pipeline proven end to end (smoke run): train → int8 TFLite → parity →
+  artifacts to Drive. Real-vocab golden vectors verified across HF/Python/Kotlin.
+- Transformer dress-rehearsal artifacts in local assets (130 MB model — local builds
+  only; GitHub can't take it, see LFS below).
+- Web version polished and visually verified (fixed frame across tabs, icons, font,
+  easing, scrollbars; `web/scripts/visual-check.mjs` measures it in real Chrome).
 
-4. Android Studio emulator — full end-to-end proof: install the APK, enable the
-   accessibility service, scroll a risky post, watch the overlay fire.
-5. The web version covers layout review and demos (that's what it's for).
-6. `python -m samind_ml.bench` catches gross model slowness on the desktop.
+## Remaining work
 
-**Team, ongoing — the long pole:**
+**App verification (needs a screen, not code):**
 
-7. Grow the corpus, mostly the *safe* side (fitness, recovery, cooking): balance is
-   63/37 risky-heavy vs the ≤55/45 target, and volume needs to grow ~10x.
-8. At 1,000+ examples: run `ml/notebooks/train_colab.ipynb` — it trains the
-   transformer, converts to TFLite, runs the parity gate and drops artifacts to Drive.
+1. Run the APK — Appetize.io in the browser, or Android Studio emulator — enable the
+   service, scroll a risky post, watch the overlay. The last unwatched piece.
 
-**Deferred (not blocking anything):**
+**Web gaps (vs the design board):**
 
-9. Psychologist review of [ANNOTATION_GUIDELINE.md](ANNOTATION_GUIDELINE.md) —
-   postponed; required before the first *large* labeling round, not before collection.
-10. Real-device gates — the official <50 ms latency number, battery drain, OEM
-    background-killing behavior. Emulator numbers are indicative only; reports mark
-    these "pending hardware". Only the November pilot truly requires devices.
-11. Web extras (settings screen, in-browser model inference), overlay choice/chat
-    flows from the design board.
+2. Settings screen (language, sensitivity; toggle currently lives on Home).
+3. Stats charts (counters + log exist; board wants charts).
+4. Grounding GIF/animation slots (text steps work).
+5. Chat rule tests on the web side (normalizer is tested; chat routing isn't).
+6. In-browser model inference (feed demo runs on the lexicon tier).
 
-Short version: push, train the baseline, collect data — the phone moved to "whenever",
-nothing else shifts.
+**Android gaps (vs the design board):**
+
+7. Settings screen; in-overlay choice/chat/grounding flows; grounding GIFs;
+   stats charts; overlay outcome tracking (shown/dismissed/opened) for the pilot's
+   dismissal-rate metric.
+
+**ML:**
+
+8. ~~Corpus growth, real Colab run, threshold update, golden regen~~ — **done**
+   (2026-09-01, see status above). Retrain path stays one notebook run.
+9. Git LFS (or release artifacts) for the 130 MB transformer so CI builds can
+   include it — until then the transformer ships only in local builds.
+10. ~~`vocab.txt` byte-identity check in CI~~ — done (`cmp` step in the android job).
+10b. **Behavior-CI added** (`behavior` job + `android/scripts/behavior-test.sh`):
+    boots an emulator on every push, enables the service via adb, renders safe and
+    trigger text inside the Contacts app (a foreign package) and asserts the overlay
+    fires only for the trigger; screenshots uploaded as artifacts. Marked
+    `continue-on-error` until it proves stable across a few runs — then flip it to
+    blocking. Covers service→classifier→overlay on the baseline tier (CI has no
+    130 MB transformer until LFS).
+11. Model size: 130 MB vs 100 MB target — trim the multilingual vocab to observed
+    tokens or evaluate a smaller WordPiece candidate.
+12. Annotation hygiene: resolve the 814 label/category contradictions in corpus v2.
+
+**Deferred (unchanged):**
+
+11. Psychologist review of [ANNOTATION_GUIDELINE.md](ANNOTATION_GUIDELINE.md) —
+    before the first large labeling round.
+12. Real-device gates (latency, battery, OEM background-killing) — pending hardware;
+    required by the November pilot, not before.
+
+Short version: watch the overlay fire once, close the design-board gaps at leisure,
+and everything else waits on data.
 
 ---
 
