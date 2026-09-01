@@ -4,10 +4,12 @@ import android.accessibilityservice.AccessibilityService
 import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
+import android.hardware.display.DisplayManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.Display
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -21,17 +23,24 @@ import com.samind.app.content.DistractionQuestions
 
 class OverlayController(private val service: AccessibilityService) {
 
-    // API 30+ requires a window context for TYPE_ACCESSIBILITY_OVERLAY; the plain
-    // service context yields an invalid token and addView throws BadTokenException
-    private val overlayContext: Context =
+    // API 30+ needs a window context for TYPE_ACCESSIBILITY_OVERLAY (the plain service
+    // context yields an invalid token), and that window context can only be created
+    // from a display context — a service context has no display of its own.
+    private val overlayContext: Context = try {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            service.createWindowContext(
+            val display = service.getSystemService(DisplayManager::class.java)
+                .getDisplay(Display.DEFAULT_DISPLAY)
+            service.createDisplayContext(display).createWindowContext(
                 WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
                 null,
             )
         } else {
             service
         }
+    } catch (e: Exception) {
+        Log.e(TAG, "window context unavailable, using service context", e)
+        service
+    }
 
     private val windowManager = overlayContext.getSystemService(WindowManager::class.java)
     private val inflater = LayoutInflater.from(overlayContext)

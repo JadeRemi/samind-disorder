@@ -26,9 +26,15 @@ class ScreenReaderService : AccessibilityService() {
     private var lastAnalyzedHash = 0
 
     override fun onServiceConnected() {
-        classifier = TriggerClassifier(this)
-        overlay = OverlayController(this)
-        if (Prefs.monitoringEnabled(this)) overlay.showMascot()
+        // never let setup kill the service: a dead service silently disables
+        // itself in system settings and the user is left unprotected
+        try {
+            classifier = TriggerClassifier(this)
+            overlay = OverlayController(this)
+            if (Prefs.monitoringEnabled(this)) overlay.showMascot()
+        } catch (e: Exception) {
+            Log.e(TAG, "service setup failed", e)
+        }
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {

@@ -36,10 +36,19 @@ trap collect_logs EXIT
 
 snap() { adb exec-out screencap -p > "$OUT/$1.png" || true; }
 
-# count real windows only — "Window{...}" records, not package lists elsewhere
-# in the dump (that mistake made every earlier verdict meaningless)
+# count real windows only — "Window{...}" records, excluding the system crash
+# dialog, which also carries our package name and would fake a passing count
 overlay_windows() {
-  adb shell dumpsys window windows | grep -E "Window\{" | grep -c "$PKG" || true
+  adb shell dumpsys window windows \
+    | grep -E "Window\{" | grep "$PKG" | grep -vc "Application Error" || true
+}
+
+# a crash means the feature is broken; stop immediately instead of measuring windows
+assert_no_crash() {
+  if adb logcat -d | grep -q "FATAL EXCEPTION"; then
+    echo "FAIL: the app crashed ($1)"
+    exit 1
+  fi
 }
 
 service_bound() {
@@ -101,6 +110,7 @@ while [ $SECONDS -lt "$deadline" ]; do
 done
 
 snap 1_service_enabled
+assert_no_crash "during service startup"
 service_bound && echo "service is bound" || echo "warning: service not listed in dumpsys accessibility"
 echo "baseline samind windows (mascot expected >= 1): $BASELINE"
 [ "$BASELINE" -ge 1 ] || { echo "FAIL: mascot window absent — service not running"; exit 1; }
@@ -121,6 +131,7 @@ echo "=== positive: trigger text in a foreign app"
 open_foreign_text "$TRIGGER_TEXT"
 FINAL=$(wait_for_delta "$BASELINE" 25)
 snap 3_trigger_text
+assert_no_crash "while handling the trigger"
 adb shell dumpsys window windows | grep "$PKG" > "$OUT/windows_trigger.txt" || true
 if [ "$FINAL" -le "$BASELINE" ]; then
   echo "FAIL: overlay did not appear on trigger text ($FINAL <= $BASELINE)"; exit 1
