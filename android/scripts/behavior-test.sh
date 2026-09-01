@@ -73,6 +73,10 @@ open_foreign_text() { # renders text inside the Contacts app (a foreign package)
 
 echo "=== install"
 adb install -r "$APK" >/dev/null
+# a package install/replace wipes accessibility grants; let the package manager
+# finish its broadcasts before touching those settings, or they get cleared again
+echo "waiting for package state to settle"
+sleep 20
 
 echo "=== enable monitoring pref (debug build, via run-as)"
 adb shell am start -n "$PKG/.MainActivity" >/dev/null
@@ -86,19 +90,33 @@ echo "pref written ok"
 
 echo "=== enable accessibility service"
 adb logcat -c || true
-# Android 13+ blocks accessibility for sideloaded apps unless this op is allowed;
-# without it the settings below silently revert to null/0
-adb shell appops set "$PKG" ACCESS_RESTRICTED_SETTINGS allow || true
-adb shell settings put secure enabled_accessibility_services "$SERVICE"
-adb shell settings put secure accessibility_enabled 1
-sleep 5
 
-STATE=$(adb shell settings get secure enabled_accessibility_services | tr -d '\r')
-echo "enabled_accessibility_services = $STATE"
-case "$STATE" in
-  *ScreenReaderService*) ;;
-  *) echo "FAIL: the system rejected the accessibility setting (restricted settings?)"; exit 1 ;;
-esac
+read_state() { adb shell settings get secure enabled_accessibility_services | tr -d '\r'; }
+
+# retry until the setting STAYS on: the system clears it on package changes and
+# blocks it entirely for sideloaded apps without the restricted-settings op
+STUCK=0
+for attempt in 1 2 3 4 5; do
+  adb shell appops set "$PKG" ACCESS_RESTRICTED_SETTINGS allow >/dev/null 2>&1 || true
+  adb shell settings put secure enabled_accessibility_services "$SERVICE"
+  adb shell settings put secure accessibility_enabled 1
+  sleep 8
+  STATE=$(read_state)
+  echo "attempt $attempt: enabled_accessibility_services = $STATE"
+  case "$STATE" in
+    *ScreenReaderService*)
+      sleep 6
+      case "$(read_state)" in
+        *ScreenReaderService*) STUCK=1 ;;
+        *) echo "  setting was cleared again, retrying" ;;
+      esac
+      ;;
+  esac
+  [ "$STUCK" -eq 1 ] && break
+done
+
+[ "$STUCK" -eq 1 ] || { echo "FAIL: accessibility setting will not persist"; exit 1; }
+echo "accessibility service enabled and persistent"
 
 echo "=== wait for the service to bind and show the mascot"
 BASELINE=0
