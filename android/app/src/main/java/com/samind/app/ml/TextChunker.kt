@@ -12,7 +12,10 @@ package com.samind.app.ml
  *  - a sentence longer than the limit is windowed on word boundaries, never
  *    mid-word;
  *  - consecutive chunks overlap, so a phrase straddling a boundary still
- *    appears intact inside at least one chunk;
+ *    appears intact inside at least one chunk (the overlap is dropped only when
+ *    it would push the chunk past [CHUNK_CHARS] — in that case the following
+ *    sentence is whole anyway, so nothing needs protecting);
+ *  - no chunk ever exceeds [CHUNK_CHARS], which is the model's input budget;
  *  - fragments from separate UI nodes are joined with sentence separators, so
  *    a caption and a button label never merge into one false sentence;
  *  - truncation (very text-heavy screens) is reported, never silent.
@@ -56,8 +59,14 @@ object TextChunker {
                     current = StringBuilder()
                     break
                 }
-                // carry the tail forward so a phrase spanning the cut survives whole
-                current = StringBuilder(tailOf(chunks.last()))
+                // carry the tail forward so a phrase spanning the cut survives whole,
+                // but never past the chunk limit — the model input is bounded
+                val tail = tailOf(chunks.last())
+                current = if (tail.length + 1 + sentence.length <= CHUNK_CHARS) {
+                    StringBuilder(tail)
+                } else {
+                    StringBuilder()
+                }
             }
             if (current.isNotEmpty()) current.append(' ')
             current.append(sentence)

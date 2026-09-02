@@ -88,6 +88,24 @@ class TextChunkerTest {
     }
 
     @Test
+    fun noChunkEverExceedsTheModelInputLimit() {
+        val mixed = listOf(
+            "OK",
+            "a".repeat(300) + ".",
+            List(80) { "word$it" }.joinToString(" ") + ".",
+            "short caption here",
+            "b".repeat(310) + "!",
+        ) + List(30) { "Sentence $it with a few more words to pack the buffer." }
+        val result = TextChunker.chunk(mixed)
+        for (chunk in result.chunks) {
+            assertTrue(
+                "chunk of ${chunk.length} chars exceeds ${TextChunker.CHUNK_CHARS}",
+                chunk.length <= TextChunker.CHUNK_CHARS,
+            )
+        }
+    }
+
+    @Test
     fun emptyInputIsSafe() {
         val result = TextChunker.chunk(emptyList())
         assertTrue(result.chunks.isEmpty())
