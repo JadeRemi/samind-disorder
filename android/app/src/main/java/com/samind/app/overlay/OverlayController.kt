@@ -96,6 +96,7 @@ class OverlayController(private val service: AccessibilityService) {
         try {
             windowManager.addView(view, params)
             questionView = view
+            Log.i(TAG, "question overlay shown")
         } catch (e: Exception) {
             Log.e(TAG, "could not add question overlay", e)
         }

@@ -2,6 +2,7 @@ package com.samind.testfeed
 
 import android.app.Activity
 import android.os.Bundle
+import android.util.Log
 import android.util.TypedValue
 import android.widget.ScrollView
 import android.widget.TextView
@@ -25,9 +26,13 @@ class FeedActivity : Activity() {
             contentDescription = text
         }
         setContentView(ScrollView(this).apply { addView(view) })
+        // lets the harness confirm what rendered without running uiautomator,
+        // which hijacks accessibility and tears down the overlays under test
+        Log.i(TAG, "showing: $text")
     }
 
     private companion object {
         const val EXTRA_TEXT = "text"
+        const val TAG = "SamindTestFeed"
     }
 }

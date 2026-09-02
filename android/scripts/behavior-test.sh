@@ -87,9 +87,9 @@ open_foreign_text() {
   adb shell am force-stop "$FEED_PKG" >/dev/null 2>&1 || true
   adb shell am start -n "$FEED_PKG/.FeedActivity" --es text "$1" >/dev/null
   sleep 5
-  adb shell uiautomator dump "/sdcard/ui_$2.xml" >/dev/null 2>&1 || true
-  adb pull "/sdcard/ui_$2.xml" "$OUT/ui_$2.xml" >/dev/null 2>&1 || true
-  if grep -qi "${1%% *}" "$OUT/ui_$2.xml" 2>/dev/null; then
+  # the feed app logs what it rendered; never use `uiautomator dump` here —
+  # it seizes the accessibility subsystem and tears down the overlays under test
+  if adb logcat -d -s SamindTestFeed | grep -q "showing: ${1%% *}"; then
     echo "confirmed: text is on screen in $FEED_PKG"
   else
     echo "FAIL: the text did not render in the foreign app — harness problem"
@@ -174,13 +174,24 @@ adb shell input keyevent KEYCODE_BACK; adb shell input keyevent KEYCODE_BACK; sl
 
 echo "=== positive: trigger text in a foreign app"
 open_foreign_text "$TRIGGER_TEXT" trigger
-FINAL=$(wait_for_delta "$BASELINE" 25)
+FINAL=$(wait_for_delta "$BASELINE" 30)
 snap 3_trigger_text
 assert_no_crash "while handling the trigger"
 adb shell dumpsys window windows | grep "$PKG" > "$OUT/windows_trigger.txt" || true
+
+# three independent signals, all required: the model flagged it, the overlay
+# window was created, and it is present on screen
+adb logcat -d -s ScreenReaderService | grep "risky=true" | grep -q "$FEED_PKG" \
+  || { echo "FAIL: the classifier did not flag the trigger text"; exit 1; }
+echo "ok: classifier flagged the trigger"
+
+adb logcat -d -s OverlayController | grep -q "question overlay shown" \
+  || { echo "FAIL: overlay was never shown"; exit 1; }
+echo "ok: overlay was shown"
+
 if [ "$FINAL" -le "$BASELINE" ]; then
-  echo "FAIL: overlay did not appear on trigger text ($FINAL <= $BASELINE)"; exit 1
+  echo "FAIL: overlay window not present on screen ($FINAL <= $BASELINE)"; exit 1
 fi
-echo "ok: overlay appeared ($BASELINE -> $FINAL windows)"
+echo "ok: overlay window on screen ($BASELINE -> $FINAL windows)"
 
 echo "BEHAVIOR TEST PASSED"
