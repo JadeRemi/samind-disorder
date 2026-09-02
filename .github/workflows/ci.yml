@@ -62,7 +62,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: android/app/build/outputs/apk/debug/*.apk
+          path: |
+            android/app/build/outputs/apk/debug/*.apk
+            android/testfeed/build/outputs/apk/debug/*.apk
           retention-days: 14
 
   # end-to-end: does the service read text from OTHER apps and raise the overlay?
@@ -92,7 +94,11 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
-          script: bash android/scripts/behavior-test.sh apk/app-debug.apk behavior-artifacts
+          script: |
+            bash android/scripts/behavior-test.sh \
+              "$(find apk -name 'app-debug.apk' | head -1)" \
+              "$(find apk -name 'testfeed-debug.apk' | head -1)" \
+              behavior-artifacts
       - uses: actions/upload-artifact@v4
         if: always()
         with:

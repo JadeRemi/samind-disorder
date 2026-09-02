@@ -6,9 +6,11 @@
 # written to the output dir for the CI artifact.
 set -euo pipefail
 
-APK="${1:?usage: behavior-test.sh <apk> [outdir]}"
-OUT="${2:-behavior-artifacts}"
+APK="${1:?usage: behavior-test.sh <app-apk> <testfeed-apk> [outdir]}"
+FEED_APK="${2:?usage: behavior-test.sh <app-apk> <testfeed-apk> [outdir]}"
+OUT="${3:-behavior-artifacts}"
 PKG="com.samind.app"
+FEED_PKG="com.samind.testfeed"
 SERVICE="$PKG/$PKG.service.ScreenReaderService"
 # scores verified against the shipped baseline model: safe 0.10, trigger 0.98
 # (the trigger stays above threshold even mixed with the host app's UI text)
@@ -70,25 +72,26 @@ wait_for_delta() { # wait_for_delta <baseline> <seconds> -> prints final count
   overlay_windows
 }
 
-open_foreign_text() { # renders text inside the Contacts app (a foreign package)
-  adb shell am start -a android.intent.action.INSERT \
-    -t vnd.android.cursor.dir/contact >/dev/null
-  sleep 6
-  # type it in as well: intent extras are not honored by every Contacts build,
-  # typing puts the text on screen for certain
-  adb shell input text "${1// /%s}"
-  sleep 4
+# renders the given text inside the test-feed app: a separate package, so this
+# exercises real cross-app reading, but with deterministic content (stock apps
+# ignore intent extras and typing needs a focused field — both proved unreliable)
+open_foreign_text() {
+  adb shell am force-stop "$FEED_PKG" >/dev/null 2>&1 || true
+  adb shell am start -n "$FEED_PKG/.FeedActivity" --es text "$1" >/dev/null
+  sleep 5
   adb shell uiautomator dump "/sdcard/ui_$2.xml" >/dev/null 2>&1 || true
   adb pull "/sdcard/ui_$2.xml" "$OUT/ui_$2.xml" >/dev/null 2>&1 || true
   if grep -qi "${1%% *}" "$OUT/ui_$2.xml" 2>/dev/null; then
-    echo "confirmed: text is on screen in the foreign app"
+    echo "confirmed: text is on screen in $FEED_PKG"
   else
-    echo "warning: could not confirm the text rendered on screen"
+    echo "FAIL: the text did not render in the foreign app — harness problem"
+    exit 1
   fi
 }
 
 echo "=== install"
 adb install -r "$APK" >/dev/null
+adb install -r "$FEED_APK" >/dev/null
 # a package install/replace wipes accessibility grants; let the package manager
 # finish its broadcasts before touching those settings, or they get cleared again
 echo "waiting for package state to settle"
