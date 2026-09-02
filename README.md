@@ -163,10 +163,27 @@ stays on the local rule engine, and the model loads from bundled assets.
 - Only aggregate trigger events (timestamp, source app, score) are stored, locally, in Room.
 - The app requests no network permission.
 
+## Testing
+
+Beyond unit tests (Python, Kotlin, web — all in CI), the repo carries an
+end-to-end **behavior test**: `android/scripts/behavior-test.sh` boots an
+emulator in CI, installs the app plus a separate stand-in app (`:testfeed`)
+that renders controlled text, enables the accessibility service via adb, and
+asserts that a trigger phrase in the *other* app raises the overlay while safe
+text does not.
+
+The same run captures **UI evidence**: a numbered screenshot of every state —
+home before/after enabling monitoring, the floating mascot over another app,
+safe text passing through untouched, the trigger interception itself, each
+in-app screen in both English and Russian, and a grounding exercise in
+progress — plus `EVIDENCE.md` describing each image and the full logcat.
+Download it from the run's `ui-evidence` artifact (kept 30 days).
+
 ## Status
 
-Early prototype: core loop (read → classify → interrupt → ground) works end to end with
-the fallback lexicon. Known gaps:
+Working prototype: the core loop (read another app's screen → classify → interrupt →
+ground) is proven end to end by an automated emulator test on every push, running the
+trained on-device model. Known gaps:
 
 - True background blur of third-party apps is not possible from an overlay; a translucent
   scrim is used instead.

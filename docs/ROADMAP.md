@@ -1,5 +1,39 @@
 # Samind ML roadmap — dataset → baseline → transformer
 
+## Status (2026-09-02) — end-to-end product loop proven in CI
+
+The `behavior` job passes: on every push an emulator boots, the app is installed,
+the accessibility service is enabled via adb, and a **separate app**
+(`:testfeed`, a 40-line stand-in for a social feed) renders controlled text.
+Three independent signals are asserted — the classifier flags the trigger, the
+overlay reports itself shown, and the overlay window is present on screen —
+plus the negative case (safe text raises nothing). Screenshots and full logcat
+are uploaded as artifacts.
+
+**That closes the last unverified link in the product**: reading another app's
+screen → classifying → intervening, all automated, no phone required.
+
+Real defects this harness found (all fixed, all would have hit users):
+
+1. `BadTokenException` — overlays used the plain service context; the service
+   crashed instantly on Android 11+, and Android then silently switched the
+   accessibility service off.
+2. `createWindowContext` misuse — a window context must come from a *display*
+   context; second instant crash.
+3. **Score dilution** — the service classified the whole screen as one blob, so
+   surrounding UI text pushed a real trigger from 0.82 down to 0.55 (below
+   threshold). Fixed with sentence-aware chunking (`TextChunker`, 10 unit tests):
+   sentences never split while they fit, over-long ones windowed on word
+   boundaries, overlapping chunks so a phrase straddling a cut survives whole,
+   worst chunk score wins, truncation logged rather than silent.
+4. A chunk-limit overflow in that chunker, caught by its own unit test.
+
+Harness lessons worth keeping: `uiautomator dump` seizes the accessibility
+subsystem and tears down the overlays under test (never use it here); a package
+install wipes accessibility grants, so enablement must be retried until it
+persists; and the crash dialog carries the app's package name, so window counts
+must exclude it.
+
 ## Status (2026-09-01) — real model shipped
 
 - Corpus v2 landed: 6,041 labeled forum rows (5,650 unique, 56/44 balance, `coded`
@@ -29,10 +63,13 @@
 
 ## Remaining work
 
-**App verification (needs a screen, not code):**
+**App verification:**
 
-1. Run the APK — Appetize.io in the browser, or Android Studio emulator — enable the
-   service, scroll a risky post, watch the overlay. The last unwatched piece.
+1. ~~Run the APK and watch the overlay fire~~ — **done, automated** (the `behavior`
+   CI job does it on every push). A human look via Appetize/emulator is now
+   optional polish, not verification.
+1b. Flip `behavior` from `continue-on-error` to blocking after a few consecutive
+    green runs.
 
 **Web gaps (vs the design board):**
 
@@ -73,8 +110,8 @@
 12. Real-device gates (latency, battery, OEM background-killing) — pending hardware;
     required by the November pilot, not before.
 
-Short version: watch the overlay fire once, close the design-board gaps at leisure,
-and everything else waits on data.
+Short version: the core loop is proven and automated; what's left is the
+design-board screens, model size, and data hygiene.
 
 ---
 

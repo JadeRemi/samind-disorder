@@ -26,6 +26,13 @@ SAFE_TEXT="grandmas soup recipe never fails us"
 TRIGGER_TEXT="thinspo meanspo pro ana starving purge"
 
 mkdir -p "$OUT"
+cat > "$OUT/EVIDENCE.md" <<'HEADER'
+# Samind — captured UI evidence
+
+Screenshots taken by `android/scripts/behavior-test.sh` during the automated
+end-to-end run on an emulator, in order.
+
+HEADER
 
 # on ANY exit, print what the device actually said — never fail blind
 collect_logs() {
@@ -49,7 +56,20 @@ collect_logs() {
 }
 trap collect_logs EXIT
 
-snap() { adb exec-out screencap -p > "$OUT/$1.png" || true; }
+SHOT=0
+# snap <slug> <caption> — numbered screenshot + a line in the evidence index
+snap() {
+  SHOT=$((SHOT + 1))
+  local name
+  name=$(printf "%02d_%s" "$SHOT" "$1")
+  adb exec-out screencap -p > "$OUT/$name.png" || true
+  echo "- \`$name.png\` — ${2:-$1}" >> "$OUT/EVIDENCE.md"
+}
+
+open_app_screen() { # open_app_screen <home|chat|ground|stats>
+  adb shell am start -n "$PKG/.MainActivity" --es destination "$1" >/dev/null
+  sleep 4
+}
 
 # count real windows only — "Window{...}" records, excluding the system crash
 # dialog, which also carries our package name and would fake a passing count
@@ -105,6 +125,10 @@ adb install -r "$FEED_APK" >/dev/null
 echo "waiting for package state to settle"
 sleep 20
 
+echo "=== capture: app before monitoring is enabled"
+open_app_screen home
+snap home_monitoring_off "Home screen, monitoring off (initial state)"
+
 echo "=== enable monitoring pref (debug build, via run-as)"
 adb shell am start -n "$PKG/.MainActivity" >/dev/null
 sleep 4
@@ -154,7 +178,7 @@ while [ $SECONDS -lt "$deadline" ]; do
   sleep 3
 done
 
-snap 1_service_enabled
+snap mascot_overlay "Floating mascot over another app (monitoring active)"
 assert_no_crash "during service startup"
 service_bound && echo "service is bound" || echo "warning: service not listed in dumpsys accessibility"
 echo "baseline samind windows (mascot expected >= 1): $BASELINE"
@@ -163,7 +187,7 @@ echo "baseline samind windows (mascot expected >= 1): $BASELINE"
 echo "=== negative: safe text in a foreign app"
 open_foreign_text "$SAFE_TEXT" safe
 sleep 10
-snap 2_safe_text
+snap safe_text_no_overlay "Safe text in another app — no intervention (correct)"
 SAFE_COUNT=$(overlay_windows)
 adb shell dumpsys window windows | grep "$PKG" > "$OUT/windows_safe.txt" || true
 if [ "$SAFE_COUNT" -gt "$BASELINE" ]; then
@@ -175,7 +199,7 @@ adb shell input keyevent KEYCODE_BACK; adb shell input keyevent KEYCODE_BACK; sl
 echo "=== positive: trigger text in a foreign app"
 open_foreign_text "$TRIGGER_TEXT" trigger
 FINAL=$(wait_for_delta "$BASELINE" 30)
-snap 3_trigger_text
+snap trigger_intervention "TRIGGER DETECTED in another app — dimmed screen + distraction question"
 assert_no_crash "while handling the trigger"
 adb shell dumpsys window windows | grep "$PKG" > "$OUT/windows_trigger.txt" || true
 
@@ -194,4 +218,24 @@ if [ "$FINAL" -le "$BASELINE" ]; then
 fi
 echo "ok: overlay window on screen ($BASELINE -> $FINAL windows)"
 
+echo "=== capture: every in-app screen (English, then Russian)"
+for lang in en ru; do
+  adb shell "setprop persist.sys.locale $lang-US" >/dev/null 2>&1 || true
+  adb shell am force-stop "$PKG" >/dev/null 2>&1 || true
+  for screen in home chat ground stats; do
+    open_app_screen "$screen"
+    snap "${screen}_$lang" "$screen screen ($lang)"
+  done
+done
+
+echo "=== capture: grounding exercise in progress"
+open_app_screen ground
+# the first technique's Start button sits in the upper card; tap by proportion
+SIZE=$(adb shell wm size | tr -d '\r' | awk -F': ' '{print $2}')
+W=${SIZE%x*}; H=${SIZE#*x}
+adb shell input tap $((W / 2)) $((H * 30 / 100)) >/dev/null 2>&1 || true
+sleep 3
+snap grounding_step "Grounding technique running (step-by-step)"
+
 echo "BEHAVIOR TEST PASSED"
+echo "evidence: $(ls "$OUT"/*.png 2>/dev/null | wc -l | tr -d ' ') screenshots + EVIDENCE.md"

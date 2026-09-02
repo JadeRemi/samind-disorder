@@ -95,9 +95,10 @@ jobs:
           target: google_apis
           disable-animations: true
           script: bash android/scripts/behavior-test.sh apk behavior-artifacts
+      # screenshots of every UI state + logcat, pass or fail
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: behavior-artifacts
+          name: ui-evidence
           path: behavior-artifacts/
-          retention-days: 14
+          retention-days: 30
