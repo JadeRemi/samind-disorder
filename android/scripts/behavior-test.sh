@@ -6,11 +6,19 @@
 # written to the output dir for the CI artifact.
 set -euo pipefail
 
-APK="${1:?usage: behavior-test.sh <app-apk> <testfeed-apk> [outdir]}"
-FEED_APK="${2:?usage: behavior-test.sh <app-apk> <testfeed-apk> [outdir]}"
-OUT="${3:-behavior-artifacts}"
+# takes a directory (or the repo root) and locates the APKs itself — passing
+# multiple paths through CI yaml proved fragile
+APK_DIR="${1:-.}"
+OUT="${2:-behavior-artifacts}"
 PKG="com.samind.app"
 FEED_PKG="com.samind.testfeed"
+
+APK=$(find "$APK_DIR" -name "app-debug.apk" -type f | head -1)
+FEED_APK=$(find "$APK_DIR" -name "testfeed-debug.apk" -type f | head -1)
+[ -n "$APK" ] || { echo "FAIL: app-debug.apk not found under $APK_DIR"; exit 1; }
+[ -n "$FEED_APK" ] || { echo "FAIL: testfeed-debug.apk not found under $APK_DIR"; exit 1; }
+echo "app apk:  $APK"
+echo "feed apk: $FEED_APK"
 SERVICE="$PKG/$PKG.service.ScreenReaderService"
 # scores verified against the shipped baseline model: safe 0.10, trigger 0.98
 # (the trigger stays above threshold even mixed with the host app's UI text)
