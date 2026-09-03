@@ -2,6 +2,7 @@ package com.samind.app.ui
 
 import android.content.Intent
 import android.provider.Settings
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -10,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -38,15 +41,17 @@ fun HomeScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Icon(
+        // Image, not Icon: Icon applies a single tint and would flatten the
+        // multi-colour mascot into a solid blob
+        Image(
             painterResource(R.drawable.ic_mascot),
             contentDescription = stringResource(R.string.mascot_content_description),
             modifier = Modifier.size(96.dp),
-            tint = MaterialTheme.colorScheme.primary,
         )
         Spacer(Modifier.height(24.dp))
         Text(stringResource(R.string.home_title), style = MaterialTheme.typography.headlineMedium)

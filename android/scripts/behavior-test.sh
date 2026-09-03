@@ -67,8 +67,11 @@ snap() {
 }
 
 open_app_screen() { # open_app_screen <home|chat|ground|stats>
+  # force-stop first: a running activity would ignore the destination extra
+  # (belt and braces — the app also handles onNewIntent now)
+  adb shell am force-stop "$PKG" >/dev/null 2>&1 || true
   adb shell am start -n "$PKG/.MainActivity" --es destination "$1" >/dev/null
-  sleep 4
+  sleep 5
 }
 
 # count real windows only — "Window{...}" records, excluding the system crash
@@ -221,7 +224,6 @@ echo "ok: overlay window on screen ($BASELINE -> $FINAL windows)"
 echo "=== capture: every in-app screen (English, then Russian)"
 for lang in en ru; do
   adb shell "setprop persist.sys.locale $lang-US" >/dev/null 2>&1 || true
-  adb shell am force-stop "$PKG" >/dev/null 2>&1 || true
   for screen in home chat ground stats; do
     open_app_screen "$screen"
     snap "${screen}_$lang" "$screen screen ($lang)"

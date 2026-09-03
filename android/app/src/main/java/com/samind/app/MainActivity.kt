@@ -1,5 +1,6 @@
 package com.samind.app
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,6 +10,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -22,8 +24,19 @@ import com.samind.app.ui.GroundingScreen
 import com.samind.app.ui.HomeScreen
 import com.samind.app.ui.StatsScreen
 import com.samind.app.ui.theme.SamindTheme
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 class MainActivity : ComponentActivity() {
+
+    // the overlay can launch us while we are already running; a fresh intent
+    // must still navigate, otherwise the mascot tap appears to do nothing
+    private val destinationRequests = MutableSharedFlow<String>(extraBufferCapacity = 1)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        intent.getStringExtra(EXTRA_DESTINATION)?.let { destinationRequests.tryEmit(it) }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,16 +49,21 @@ class MainActivity : ComponentActivity() {
                 val current = backStack?.destination?.route
 
                 val tabs = listOf(
-                    "home" to stringResource(R.string.tab_home),
-                    "chat" to stringResource(R.string.tab_chat),
-                    "ground" to stringResource(R.string.tab_ground),
-                    "stats" to stringResource(R.string.tab_stats),
+                    Triple("home", stringResource(R.string.tab_home), R.drawable.ic_tab_home),
+                    Triple("chat", stringResource(R.string.tab_chat), R.drawable.ic_tab_chat),
+                    Triple("ground", stringResource(R.string.tab_ground), R.drawable.ic_tab_ground),
+                    Triple("stats", stringResource(R.string.tab_stats), R.drawable.ic_tab_stats),
                 )
+
+                // navigate when the overlay launches us while already running
+                LaunchedEffect(Unit) {
+                    destinationRequests.collect { route -> navController.navigate(route) }
+                }
 
                 Scaffold(
                     bottomBar = {
                         NavigationBar {
-                            tabs.forEach { (route, label) ->
+                            tabs.forEach { (route, label, iconRes) ->
                                 NavigationBarItem(
                                     selected = current == route,
                                     onClick = {
@@ -55,10 +73,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
                                     icon = {
-                                        Icon(
-                                            painterResource(R.drawable.ic_mascot),
-                                            contentDescription = label,
-                                        )
+                                        Icon(painterResource(iconRes), contentDescription = label)
                                     },
                                     label = { Text(label) },
                                 )
