@@ -223,20 +223,22 @@ echo "ok: overlay window on screen ($BASELINE -> $FINAL windows)"
 
 echo "=== capture: every in-app screen (English, then Russian)"
 for lang in en ru; do
-  adb shell "setprop persist.sys.locale $lang-US" >/dev/null 2>&1 || true
+  # per-app locale (API 33+): setprop does not take effect at runtime
+  adb shell cmd locale set-app-locales "$PKG" --locales "$lang" >/dev/null 2>&1 || true
+  sleep 2
   for screen in home chat ground stats; do
     open_app_screen "$screen"
     snap "${screen}_$lang" "$screen screen ($lang)"
   done
 done
+adb shell cmd locale set-app-locales "$PKG" --locales en >/dev/null 2>&1 || true
 
 echo "=== capture: grounding exercise in progress"
-open_app_screen ground
-# the first technique's Start button sits in the upper card; tap by proportion
-SIZE=$(adb shell wm size | tr -d '\r' | awk -F': ' '{print $2}')
-W=${SIZE%x*}; H=${SIZE#*x}
-adb shell input tap $((W / 2)) $((H * 30 / 100)) >/dev/null 2>&1 || true
-sleep 3
+# deep-link straight into a technique — deterministic, no coordinate tapping
+adb shell am force-stop "$PKG" >/dev/null 2>&1 || true
+adb shell am start -n "$PKG/.MainActivity" --es destination ground \
+  --es technique 54321 >/dev/null
+sleep 5
 snap grounding_step "Grounding technique running (step-by-step)"
 
 echo "BEHAVIOR TEST PASSED"

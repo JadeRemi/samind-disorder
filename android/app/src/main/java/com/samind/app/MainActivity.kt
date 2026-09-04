@@ -88,7 +88,9 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable("home") { HomeScreen() }
                         composable("chat") { ChatScreen() }
-                        composable("ground") { GroundingScreen() }
+                        composable("ground") {
+                            GroundingScreen(intent.getStringExtra(EXTRA_TECHNIQUE))
+                        }
                         composable("stats") { StatsScreen() }
                     }
                 }
@@ -98,5 +100,6 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_DESTINATION = "destination"
+        const val EXTRA_TECHNIQUE = "technique"
     }
 }

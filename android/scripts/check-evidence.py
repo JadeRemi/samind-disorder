@@ -6,14 +6,16 @@ identical screens (navigation silently not happening), blank or frozen
 screens, and washed-out screens (flattened icons / missing styling).
 """
 
-import hashlib
 import sys
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageChops
 
-MIN_COLORS = 200          # a real screen has gradients, text antialiasing, icons
-MIN_DIFF_RATIO = 0.02     # two screens must differ on at least 2% of pixels
+MIN_COLORS = 200        # a real screen has gradients, text antialiasing, icons
+# calibrated: two states of the same screen (e.g. monitoring on/off) differ by
+# ~1.5% of pixels, while a genuinely repeated frame differs by <0.1%
+MIN_DIFF_RATIO = 0.005
+PIXEL_TOLERANCE = 8     # ignore imperceptible per-channel noise
 THUMB = (240, 480)
 
 
@@ -24,10 +26,10 @@ def load(path: Path) -> Image.Image:
 def diff_ratio(a: Image.Image, b: Image.Image) -> float:
     if a.size != b.size:
         return 1.0
-    sa, sb = a.resize(THUMB), b.resize(THUMB)
-    pixels_a, pixels_b = sa.getdata(), sb.getdata()
-    different = sum(1 for pa, pb in zip(pixels_a, pixels_b) if pa != pb)
-    return different / (THUMB[0] * THUMB[1])
+    grey = ImageChops.difference(a.resize(THUMB), b.resize(THUMB)).convert("L")
+    histogram = grey.histogram()
+    changed = sum(count for value, count in enumerate(histogram) if value > PIXEL_TOLERANCE)
+    return changed / (THUMB[0] * THUMB[1])
 
 
 def main() -> int:
@@ -46,8 +48,6 @@ def main() -> int:
         colors = image.getcolors(maxcolors=1 << 24) or []
         if len(colors) < MIN_COLORS:
             problems.append(f"{path.name}: only {len(colors)} distinct colours — blank or broken?")
-        digest = hashlib.md5(image.tobytes()).hexdigest()
-        image.info["digest"] = digest
 
     # every captured state must be visibly distinct from every other
     names = list(images)

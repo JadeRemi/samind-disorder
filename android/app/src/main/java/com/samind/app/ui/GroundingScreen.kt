@@ -31,8 +31,11 @@ import com.samind.app.content.GroundingTechnique
 import com.samind.app.content.GroundingTechniques
 
 @Composable
-fun GroundingScreen() {
-    var active by remember { mutableStateOf<GroundingTechnique?>(null) }
+fun GroundingScreen(initialTechniqueId: String? = null) {
+    // deep link support: the overlay (and tests) can open one technique directly
+    var active by remember {
+        mutableStateOf(initialTechniqueId?.let { GroundingTechniques.byId(it) })
+    }
 
     active?.let { technique ->
         TechniqueRunner(technique) { active = null }
