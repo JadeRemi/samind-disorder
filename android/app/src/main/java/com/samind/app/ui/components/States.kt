@@ -31,6 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.samind.app.R
+import com.samind.app.ui.theme.LocalReducedMotion
 import com.samind.app.ui.theme.Neutral900
 import com.samind.app.ui.theme.Primary900
 import com.samind.app.ui.theme.SamindGradients
@@ -142,8 +143,9 @@ fun ErrorState(
 /** Bot "typing" placeholder: fixed bar widths, gentle opacity pulse (design). */
 @Composable
 fun TypingIndicator(modifier: Modifier = Modifier) {
+    val reduced = LocalReducedMotion.current
     val pulse = rememberInfiniteTransition(label = "typing")
-    val alpha by pulse.animateFloat(
+    val animatedAlpha by pulse.animateFloat(
         0.35f, 0.9f,
         infiniteRepeatable(
             tween(SamindMotion.LONG, easing = SamindMotion.standard),
@@ -151,6 +153,7 @@ fun TypingIndicator(modifier: Modifier = Modifier) {
         ),
         label = "typingAlpha",
     )
+    val alpha = if (reduced) 0.7f else animatedAlpha
     Column(modifier.alpha(alpha), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(220.dp, 180.dp, 120.dp).forEach { barWidth ->
             Box(

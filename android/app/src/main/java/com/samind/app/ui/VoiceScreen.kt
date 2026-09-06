@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.samind.app.R
 import com.samind.app.ui.components.SamindBackground
 import com.samind.app.ui.components.SamindTopBar
+import com.samind.app.ui.theme.LocalReducedMotion
 import com.samind.app.ui.theme.Neutral900
 import com.samind.app.ui.theme.Primary900
 import com.samind.app.ui.theme.SamindGradients
@@ -119,17 +120,21 @@ private fun VoiceOrb(state: VoiceState, modifier: Modifier = Modifier) {
         VoiceState.SPEAKING -> 0.14f
         VoiceState.ERROR -> 0.02f
     }
+    // decorative motion: stopped entirely when the user removed animations
+    val reduced = LocalReducedMotion.current
     val transition = rememberInfiniteTransition(label = "orb")
-    val phase by transition.animateFloat(
+    val animatedPhase by transition.animateFloat(
         0f, (2 * Math.PI).toFloat(),
         infiniteRepeatable(tween(speed, easing = LinearEasing), RepeatMode.Restart),
         label = "orbPhase",
     )
-    val amp by animateFloatAsState(
+    val phase = if (reduced) 0.6f else animatedPhase
+    val animatedAmp by animateFloatAsState(
         amplitude,
         tween(SamindMotion.LONG, easing = SamindMotion.standard),
         label = "orbAmp",
     )
+    val amp = if (reduced) amplitude else animatedAmp
 
     Canvas(modifier) {
         val base = size.minDimension / 2f

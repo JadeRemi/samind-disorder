@@ -223,10 +223,17 @@ wired into the practices list, shared **empty / error / typing / notice** states
 built from the kit, and a full **Settings** screen (sectioned cards, animated
 disclosure, practice defaults, privacy, about).
 
+**Also done:** adaptivity (`Adaptive.kt` — width classes, capped/centred
+content column so tablets and foldables stay phone-shaped, tighter margins
+under 360 dp) and **reduced motion** (system "remove animations" setting is
+read and honoured: decorative motion freezes, the breathing fill stays because
+it is the exercise).
+
 **Not done:**
-- Phase E adaptivity (tablet / landscape / small-width passes).
-- Reduced-motion handling.
-- Speech recognition itself (screen and states only) — open question 4.
+- Landscape-specific practice layouts (actions beside the square rather than
+  below) — the capped column keeps it usable meanwhile.
+- Speech recognition itself — screen and states only; see
+  [SPEECH_PLAN.md](SPEECH_PLAN.md), now covering both local and remote engines.
 - First Kotlin compile: pending CI.
 
 ## 5. Open questions for the designer

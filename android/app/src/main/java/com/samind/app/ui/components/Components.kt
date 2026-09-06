@@ -30,6 +30,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.samind.app.R
+import com.samind.app.ui.theme.AdaptiveContainer
 import com.samind.app.ui.theme.Neutral900
 import com.samind.app.ui.theme.Primary200
 import com.samind.app.ui.theme.Primary900
@@ -59,7 +60,8 @@ fun SamindBackground(
         )
         // static veil: never scrolls or reacts (design annotation)
         Box(Modifier.fillMaxSize().background(SamindGradients.surfaceVeil))
-        content()
+        // phone-shaped column, centred: tablets and foldables must not stretch
+        AdaptiveContainer { content() }
     }
 }
 

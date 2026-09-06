@@ -109,10 +109,12 @@ private val typography = Typography(
 
 @Composable
 fun SamindTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = colors,
-        shapes = shapes,
-        typography = typography,
-        content = content,
-    )
+    ProvideAdaptiveEnvironment {
+        MaterialTheme(
+            colorScheme = colors,
+            shapes = shapes,
+            typography = typography,
+            content = content,
+        )
+    }
 }
