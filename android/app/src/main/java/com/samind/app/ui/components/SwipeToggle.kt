@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -71,6 +72,9 @@ fun SwipeToggle(
         modifier
             .fillMaxWidth()
             .height(trackHeight)
+            // measured at layout time: reading it from pointerInput meant the
+            // knob stayed at 0 until the first touch, so the ON state never showed
+            .onSizeChanged { trackWidthPx = it.width.toFloat() }
             .background(SamindGradients.controlActive, PillShape),
     ) {
         Box(
@@ -78,7 +82,6 @@ fun SwipeToggle(
                 .fillMaxWidth()
                 .height(trackHeight)
                 .pointerInput(checked, trackWidthPx) {
-                    trackWidthPx = size.width.toFloat()
                     val travel = (trackWidthPx - knobPx - padPx * 2).coerceAtLeast(1f)
                     detectHorizontalDragGestures(
                         onDragEnd = {
