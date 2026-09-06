@@ -19,8 +19,11 @@ import kotlinx.coroutines.launch
 
 class ScreenReaderService : AccessibilityService() {
 
-    private lateinit var classifier: TriggerClassifier
-    private lateinit var overlay: OverlayController
+    // nullable, not lateinit: the system can stop the service before (or
+    // instead of) onServiceConnected, and onDestroy must never touch an
+    // uninitialised property — that crash disables the service in settings
+    private var classifier: TriggerClassifier? = null
+    private var overlay: OverlayController? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private var cooldownUntil = 0L
@@ -31,8 +34,9 @@ class ScreenReaderService : AccessibilityService() {
         // itself in system settings and the user is left unprotected
         try {
             classifier = TriggerClassifier(this)
-            overlay = OverlayController(this)
-            if (Prefs.monitoringEnabled(this)) overlay.showMascot()
+            overlay = OverlayController(this).also {
+                if (Prefs.monitoringEnabled(this)) it.showMascot()
+            }
         } catch (e: Exception) {
             Log.e(TAG, "service setup failed", e)
         }
@@ -46,6 +50,8 @@ class ScreenReaderService : AccessibilityService() {
         if (source == packageName || source in IGNORED_PACKAGES) return
 
         val now = SystemClock.elapsedRealtime()
+        val overlay = overlay ?: return
+        val classifier = classifier ?: return
         if (now < cooldownUntil || overlay.isQuestionShowing) return
 
         val root = rootInActiveWindow ?: return
@@ -100,12 +106,15 @@ class ScreenReaderService : AccessibilityService() {
 
 
     override fun onInterrupt() {
-        overlay.hideAll()
+        overlay?.hideAll()
     }
 
     override fun onDestroy() {
-        overlay.hideAll()
-        classifier.close()
+        // must be crash-proof: setup may never have run
+        runCatching { overlay?.hideAll() }
+        runCatching { classifier?.close() }
+        overlay = null
+        classifier = null
         scope.cancel()
         super.onDestroy()
     }
