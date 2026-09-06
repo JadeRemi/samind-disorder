@@ -3,20 +3,19 @@ package com.samind.app.ui
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,71 +28,85 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.samind.app.R
 import com.samind.app.data.Prefs
+import com.samind.app.ui.components.SamindBackground
+import com.samind.app.ui.components.ScreenMargin
+import com.samind.app.ui.components.SwipeToggle
+import com.samind.app.ui.theme.Neutral900
+import com.samind.app.ui.theme.Primary900
 
 @Composable
 fun HomeScreen() {
     val context = LocalContext.current
     var enabled by remember { mutableStateOf(Prefs.monitoringEnabled(context)) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        // Image, not Icon: Icon applies a single tint and would flatten the
-        // multi-colour mascot into a solid blob
-        Image(
-            painterResource(R.drawable.ic_mascot),
-            contentDescription = stringResource(R.string.mascot_content_description),
-            modifier = Modifier.size(96.dp),
-        )
-        Spacer(Modifier.height(24.dp))
-        Text(stringResource(R.string.home_title), style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(8.dp))
-        Text(
-            stringResource(R.string.home_subtitle),
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(32.dp))
-        Text(
-            stringResource(if (enabled) R.string.monitoring_on else R.string.monitoring_off),
-            style = MaterialTheme.typography.titleMedium,
-        )
-        Spacer(Modifier.height(16.dp))
-        Button(
-            onClick = {
-                enabled = !enabled
-                Prefs.setMonitoringEnabled(context, enabled)
-            },
-            modifier = Modifier.fillMaxWidth(),
+    SamindBackground {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = ScreenMargin),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(stringResource(if (enabled) R.string.disable_monitoring else R.string.enable_monitoring))
+            Spacer(Modifier.height(140.dp))
+
+            Image(
+                painterResource(R.drawable.ic_wordmark),
+                contentDescription = stringResource(R.string.app_name),
+                modifier = Modifier.fillMaxWidth().height(64.dp),
+            )
+            Spacer(Modifier.height(20.dp))
+            Text(
+                stringResource(R.string.home_subtitle),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Neutral900,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(18.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.clickable { /* how-it-works sheet */ },
+            ) {
+                Icon(
+                    painterResource(R.drawable.ic_info),
+                    contentDescription = null,
+                    tint = Primary900,
+                    modifier = Modifier.size(18.dp),
+                )
+                Text(
+                    stringResource(R.string.how_it_works),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Primary900,
+                    textDecoration = TextDecoration.Underline,
+                )
+            }
+
+            Spacer(Modifier.weight(1f))
+
+            SwipeToggle(
+                checked = enabled,
+                onCheckedChange = {
+                    enabled = it
+                    Prefs.setMonitoringEnabled(context, it)
+                },
+                offLabel = stringResource(R.string.enable_monitoring),
+                onLabel = stringResource(R.string.monitoring_on),
+            )
+            Spacer(Modifier.height(12.dp))
+            Text(
+                stringResource(R.string.accessibility_hint),
+                style = MaterialTheme.typography.labelSmall,
+                color = Neutral900,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.clickable {
+                    context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                },
+            )
+            Spacer(Modifier.height(24.dp))
         }
-        Spacer(Modifier.height(8.dp))
-        OutlinedButton(
-            onClick = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(R.string.open_accessibility_settings))
-        }
-        Spacer(Modifier.height(16.dp))
-        Text(
-            stringResource(R.string.accessibility_hint),
-            style = MaterialTheme.typography.bodySmall,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(24.dp))
-        Text(
-            stringResource(R.string.disclaimer),
-            style = MaterialTheme.typography.labelSmall,
-            textAlign = TextAlign.Center,
-        )
     }
+    Spacer(Modifier.width(0.dp))
 }

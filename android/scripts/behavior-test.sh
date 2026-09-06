@@ -226,20 +226,20 @@ for lang in en ru; do
   # per-app locale (API 33+): setprop does not take effect at runtime
   adb shell cmd locale set-app-locales "$PKG" --locales "$lang" >/dev/null 2>&1 || true
   sleep 2
-  for screen in home chat ground stats; do
+  for screen in home chat practices settings; do
     open_app_screen "$screen"
     snap "${screen}_$lang" "$screen screen ($lang)"
   done
 done
 adb shell cmd locale set-app-locales "$PKG" --locales en >/dev/null 2>&1 || true
 
-echo "=== capture: grounding exercise in progress"
-# deep-link straight into a technique — deterministic, no coordinate tapping
-adb shell am force-stop "$PKG" >/dev/null 2>&1 || true
-adb shell am start -n "$PKG/.MainActivity" --es destination ground \
-  --es technique 54321 >/dev/null
-sleep 5
-snap grounding_step "Grounding technique running (step-by-step)"
+echo "=== capture: practice screens"
+for route in signin ground breathe eights practice_settings voice; do
+  adb shell am force-stop "$PKG" >/dev/null 2>&1 || true
+  adb shell am start -n "$PKG/.MainActivity" --es destination "$route" >/dev/null
+  sleep 5
+  snap "screen_$route" "$route screen (redesign)"
+done
 
 echo "BEHAVIOR TEST PASSED"
 echo "evidence: $(ls "$OUT"/*.png 2>/dev/null | wc -l | tr -d ' ') screenshots + EVIDENCE.md"

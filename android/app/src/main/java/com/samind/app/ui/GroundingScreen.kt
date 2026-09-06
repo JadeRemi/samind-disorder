@@ -1,20 +1,24 @@
 package com.samind.app.ui
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -23,83 +27,152 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.samind.app.R
-import com.samind.app.content.GroundingTechnique
-import com.samind.app.content.GroundingTechniques
+import com.samind.app.practice.GROUNDING_STEP_ITEMS
+import com.samind.app.practice.sessionComplete
+import com.samind.app.practice.stepComplete
+import com.samind.app.ui.components.CompletionDialog
+import com.samind.app.ui.components.PrimaryButton
+import com.samind.app.ui.components.SamindBackground
+import com.samind.app.ui.components.SamindTopBar
+import com.samind.app.ui.components.ScreenMargin
+import com.samind.app.ui.theme.Neutral900
+import com.samind.app.ui.theme.Primary200
+import com.samind.app.ui.theme.Primary900
+import com.samind.app.ui.theme.SamindMotion
 
+/**
+ * 5-4-3-2-1. Design rules: tapping a circle marks it immediately; "Next" is
+ * enabled only when every circle of the step is marked; marking the last item
+ * of the last step opens the completion modal by itself.
+ */
 @Composable
-fun GroundingScreen(initialTechniqueId: String? = null) {
-    val context = LocalContext.current
-    val techniques = remember(context) { GroundingTechniques.all(context) }
-    // deep link support: the overlay (and tests) can open one technique directly
-    var active by remember {
-        mutableStateOf(initialTechniqueId?.let { GroundingTechniques.byId(context, it) })
-    }
+fun GroundingScreen(initialTechniqueId: String? = null, onExit: () -> Unit = {}) {
+    var started by remember { mutableStateOf(initialTechniqueId != null) }
+    var step by remember { mutableIntStateOf(0) }
+    var marked by remember { mutableStateOf(setOf<Int>()) }
+    val done = sessionComplete(step, marked)
 
-    active?.let { technique ->
-        TechniqueRunner(technique) { active = null }
-        return
-    }
+    SamindBackground {
+        Column(Modifier.fillMaxSize()) {
+            SamindTopBar(stringResource(R.string.practice_grounding), onBack = onExit)
 
-    LazyColumn(
-        Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        items(techniques) { technique ->
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp)) {
-                    Text(technique.title, style = MaterialTheme.typography.titleLarge)
-                    Spacer(Modifier.height(4.dp))
-                    Text(technique.summary, style = MaterialTheme.typography.bodyMedium)
-                    Spacer(Modifier.height(12.dp))
-                    Button(onClick = { active = technique }) {
-                        Text(stringResource(R.string.grounding_start))
+            Column(
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(horizontal = 28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                if (!started) {
+                    Text(
+                        stringResource(R.string.grounding_intro_title),
+                        style = MaterialTheme.typography.displayMedium,
+                        color = Neutral900,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        stringResource(R.string.grounding_intro_body),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Neutral900,
+                        textAlign = TextAlign.Center,
+                    )
+                } else {
+                    Text(
+                        stringResource(GROUNDING_PROMPTS[step]),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Neutral900,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(Modifier.height(28.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        repeat(GROUNDING_STEP_ITEMS[step]) { index ->
+                            ItemCircle(
+                                checked = index in marked,
+                                onClick = { marked = marked + index },
+                            )
+                        }
                     }
                 }
             }
+
+            if (started) {
+                Text(
+                    "${step + 1} / ${GROUNDING_STEP_ITEMS.size}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Neutral900,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(12.dp))
+            }
+
+            Column(
+                Modifier.padding(horizontal = ScreenMargin, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                if (!started) {
+                    PrimaryButton(stringResource(R.string.practice_start)) { started = true }
+                } else {
+                    PrimaryButton(
+                        stringResource(R.string.practice_next),
+                        enabled = stepComplete(marked, step) && step < GROUNDING_STEP_ITEMS.lastIndex,
+                        onClick = { step++; marked = emptySet() },
+                    )
+                    PrimaryButton(stringResource(R.string.practice_finish), onExit)
+                }
+            }
+            Spacer(Modifier.height(24.dp))
+        }
+
+        if (done) {
+            CompletionDialog(
+                title = stringResource(R.string.grounding_done_title),
+                body = stringResource(R.string.grounding_done_body),
+                buttonText = stringResource(R.string.practice_finish),
+                onFinish = onExit,
+            )
         }
     }
 }
 
-@Composable
-private fun TechniqueRunner(technique: GroundingTechnique, onFinish: () -> Unit) {
-    var step by remember { mutableIntStateOf(0) }
-    val last = step == technique.steps.lastIndex
+private val GROUNDING_PROMPTS = listOf(
+    R.string.grounding_step_1,
+    R.string.grounding_step_2,
+    R.string.grounding_step_3,
+    R.string.grounding_step_4,
+    R.string.grounding_step_5,
+)
 
-    Column(
+@Composable
+private fun ItemCircle(checked: Boolean, onClick: () -> Unit) {
+    val alpha by animateFloatAsState(
+        if (checked) 1f else 0f,
+        tween(SamindMotion.SHORT, easing = SamindMotion.standard),
+        label = "item",
+    )
+    Box(
         Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+            .size(44.dp)
+            .background(Primary900.copy(alpha = alpha), CircleShape)
+            .border(1.5.dp, if (checked) Color.Transparent else Primary200, CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
     ) {
-        Text(technique.title, style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(24.dp))
-        LinearProgressIndicator(
-            progress = { (step + 1f) / technique.steps.size },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(32.dp))
-        Text(
-            technique.steps[step],
-            style = MaterialTheme.typography.titleLarge,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(48.dp))
-        Button(
-            onClick = { if (last) onFinish() else step++ },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(if (last) stringResource(R.string.grounding_done) else "Next")
-        }
-        TextButton(onClick = onFinish) {
-            Text(stringResource(R.string.overlay_dismiss))
+        if (checked) {
+            Icon(
+                painterResource(R.drawable.ic_check),
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(20.dp),
+            )
         }
     }
 }

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- extracted from the SAMIND design file; see docs/DESIGN_SYSTEM.md -->
+<resources>
+    <color name="primary_900">#4B6350</color>
+    <color name="primary_800">#738C78</color>
+    <color name="primary_400">#96AC9B</color>
+    <color name="primary_200">#BAC5BC</color>
+    <color name="neutral_900">#1D1B20</color>
+    <color name="neutral_800">#3D3A36</color>
+    <color name="neutral_0">#FFFFFF</color>
+    <color name="surface_tint">#F4EFF7</color>
+    <color name="semantic_info">#EFF6FF</color>
+    <color name="semantic_error">#BA1A1A</color>
+    <color name="semantic_error_container">#FFB3B4</color>
+</resources>

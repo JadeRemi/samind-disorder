@@ -208,13 +208,36 @@ Phase A is the only true blocker. Practices is the biggest single chunk
 (26 frames, real animation, its own settings model) and should be scheduled
 as its own workstream.
 
+## 4b. Build status (2026-09-06)
+
+**Done:** Phase A (fonts, palette, gradients, backgrounds as WebP, wordmark as
+vector, icon set) · Phase B (all components incl. SwipeToggle, ProgressDotGrid,
+CompletionDialog) · Phase C except voice (Sign-in, Home, Practices, Breathing,
+Grounding, Practice settings, Settings, Chat) · Phase D core motion (continuous
+breathing fill, 1 Hz pause blink, shared easing) · practice engine + 10 unit
+tests · Phase F capture list updated.
+
+**Also done since:** Voice screen (orb with five motion states — speed and
+amplitude vary, colour fixed — plus the mic button states), Count-eights screen
+wired into the practices list, shared **empty / error / typing / notice** states
+built from the kit, and a full **Settings** screen (sectioned cards, animated
+disclosure, practice defaults, privacy, about).
+
+**Not done:**
+- Phase E adaptivity (tablet / landscape / small-width passes).
+- Reduced-motion handling.
+- Speech recognition itself (screen and states only) — open question 4.
+- First Kotlin compile: pending CI.
+
 ## 5. Open questions for the designer
 
-1. **Mak licence** — is it licensed for app embedding? If not, the wordmark
-   ships as a vector asset instead of a font (recommended anyway).
-2. English copy for every string (the file is Russian; the app is English-first).
-3. Practice settings: do they apply per practice or globally?
-4. Voice: is speech recognition in scope for the pilot, or is the orb screen a
-   placeholder for now?
-5. Empty/error states for practices and chat (no design yet).
-6. What the 4th tab (settings) should contain — no frame exists.
+1. ~~Mak licence~~ — moot: the wordmark ships as a vector, no font embedded.
+2. **English copy** — I translated every string from the Russian design myself;
+   needs a native review before the pilot.
+3. **Practice settings scope** — built as **global** (one technique + duration
+   for all practices). Confirm, or it becomes per-practice.
+4. **Voice** — is speech recognition in scope? The orb screen is unbuilt until
+   this is answered.
+5. **Empty/error states** for practices and chat — no design exists.
+6. **Settings tab contents** — no frame exists; currently a minimal screen
+   (monitoring switch, accessibility hint, disclaimer).
