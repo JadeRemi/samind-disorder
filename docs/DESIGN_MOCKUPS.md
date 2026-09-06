@@ -1,4 +1,10 @@
-# Design mockups — prototype reference
+# Design mockups — prototype reference (SUPERSEDED)
+
+> **Obsolete as of 2026-09-06.** The FigJam whiteboard below has been replaced
+> by the real design file. Use [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) and
+> [DEV_PLAN_REDESIGN.md](DEV_PLAN_REDESIGN.md). This page is kept only as a
+> record of the original intent.
+
 
 Source: [SAMIND.DESIGN.MOCKUPS on Figma](https://www.figma.com/board/yqwVe53zQQHwGeB7MtwPGr/SAMIND.DESIGN.MOCKUPS?node-id=0-1)
 (FigJam board, link-viewable).

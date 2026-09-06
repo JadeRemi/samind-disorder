@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.samind.app.R
@@ -33,7 +34,8 @@ import com.samind.app.chat.ChatMessage
 
 @Composable
 fun ChatScreen() {
-    val engine = remember { ChatEngine() }
+    val context = LocalContext.current
+    val engine = remember(context) { ChatEngine(context) }
     val greeting = stringResource(R.string.chat_greeting)
     val messages = remember { mutableStateListOf(ChatMessage(fromUser = false, text = greeting)) }
     var input by remember { mutableStateOf("") }

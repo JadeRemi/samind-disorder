@@ -1,5 +1,23 @@
 # Samind ML roadmap — dataset → baseline → transformer
 
+## Status (2026-09-06) — real design landed, UI rebuild planned
+
+The production design file replaced the whiteboard mockups: 52 frames across
+Sign in / Home / Practices / Chat-bot, each with the designer's behavioural
+annotations. Extracted and documented in [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md)
+(tokens, type scale, components, motion rules) and planned in
+[DEV_PLAN_REDESIGN.md](DEV_PLAN_REDESIGN.md) (gap analysis, six phases,
+dependency order, open questions). Extraction method that avoided Figma rate
+limits: [FIGMA_WORKFLOW.md](FIGMA_WORKFLOW.md) — one REST call plus local SVG
+rendering.
+
+Headline: the product core (service → classifier → overlay, models, CI) is
+unaffected; this is a presentation-layer rebuild. Biggest new scope is
+**Practices** — a real timed practice engine (breathing square with continuous
+phase animation, count-eights with a 40-dot progress grid, 5-4-3-2-1 with
+per-item circles), plus a nickname sign-in and a settings tab that don't exist
+yet.
+
 ## Status (2026-09-02) — end-to-end product loop proven in CI
 
 The `behavior` job passes: on every push an emulator boots, the app is installed,

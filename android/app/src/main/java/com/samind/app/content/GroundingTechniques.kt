@@ -1,5 +1,8 @@
 package com.samind.app.content
 
+import android.content.Context
+import com.samind.app.R
+
 data class GroundingTechnique(
     val id: String,
     val title: String,
@@ -7,67 +10,33 @@ data class GroundingTechnique(
     val steps: List<String>,
 )
 
+// text lives in res/values*/content.xml so it follows the user's language
 object GroundingTechniques {
 
-    val all = listOf(
-        GroundingTechnique(
-            id = "54321",
-            title = "5-4-3-2-1 senses",
-            summary = "Anchor yourself through your five senses.",
-            steps = listOf(
-                "Name 5 things you can see around you.",
-                "Name 4 things you can physically feel.",
-                "Name 3 things you can hear right now.",
-                "Name 2 things you can smell.",
-                "Name 1 thing you can taste.",
-            ),
-        ),
-        GroundingTechnique(
-            id = "box_breath",
-            title = "Box breathing",
-            summary = "Slow, even breaths to settle your body.",
-            steps = listOf(
-                "Breathe in through your nose for 4 counts.",
-                "Hold your breath for 4 counts.",
-                "Breathe out slowly for 4 counts.",
-                "Hold empty for 4 counts.",
-                "Repeat the square 4 more times.",
-            ),
-        ),
-        GroundingTechnique(
-            id = "cold_water",
-            title = "Cool reset",
-            summary = "Temperature shift interrupts the stress loop.",
-            steps = listOf(
-                "Go to the nearest sink.",
-                "Run cool water over your wrists for 30 seconds.",
-                "Notice the temperature changing on your skin.",
-                "Pat your face gently with cool hands.",
-            ),
-        ),
-        GroundingTechnique(
-            id = "body_scan",
-            title = "Feet on the floor",
-            summary = "Return attention to physical support.",
-            steps = listOf(
-                "Press both feet firmly into the floor.",
-                "Notice the weight of your body on the chair.",
-                "Unclench your jaw and drop your shoulders.",
-                "Push your palms together for 5 seconds, then release.",
-            ),
-        ),
-        GroundingTechnique(
-            id = "categories",
-            title = "Category sprint",
-            summary = "Give the racing mind a neutral job.",
-            steps = listOf(
-                "Pick a category: cities, animals, or films.",
-                "Name one item for every letter from A to J.",
-                "Stuck on a letter? Skip it, keep moving.",
-                "Notice how your breathing slowed down.",
-            ),
-        ),
+    private data class Ids(
+        val id: String,
+        val title: Int,
+        val summary: Int,
+        val steps: Int,
     )
 
-    fun byId(id: String): GroundingTechnique? = all.find { it.id == id }
+    private val catalogue = listOf(
+        Ids("54321", R.string.tech_54321_title, R.string.tech_54321_summary, R.array.tech_54321_steps),
+        Ids("box_breath", R.string.tech_box_breath_title, R.string.tech_box_breath_summary, R.array.tech_box_breath_steps),
+        Ids("cold_water", R.string.tech_cold_water_title, R.string.tech_cold_water_summary, R.array.tech_cold_water_steps),
+        Ids("body_scan", R.string.tech_body_scan_title, R.string.tech_body_scan_summary, R.array.tech_body_scan_steps),
+        Ids("categories", R.string.tech_categories_title, R.string.tech_categories_summary, R.array.tech_categories_steps),
+    )
+
+    fun all(context: Context): List<GroundingTechnique> = catalogue.map { it.resolve(context) }
+
+    fun byId(context: Context, id: String): GroundingTechnique? =
+        catalogue.find { it.id == id }?.resolve(context)
+
+    private fun Ids.resolve(context: Context) = GroundingTechnique(
+        id = id,
+        title = context.getString(title),
+        summary = context.getString(summary),
+        steps = context.resources.getStringArray(steps).toList(),
+    )
 }

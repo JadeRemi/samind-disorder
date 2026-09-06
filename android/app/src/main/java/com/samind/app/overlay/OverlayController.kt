@@ -80,7 +80,8 @@ class OverlayController(private val service: AccessibilityService) {
     fun showQuestion() = mainHandler.post {
         if (questionView != null) return@post
         val view = inflater.inflate(R.layout.overlay_question, null)
-        view.findViewById<TextView>(R.id.question_text).text = DistractionQuestions.random()
+        view.findViewById<TextView>(R.id.question_text).text =
+            DistractionQuestions.random(overlayContext)
         view.findViewById<Button>(R.id.dismiss_button).setOnClickListener { hideQuestion() }
         view.findViewById<Button>(R.id.open_button).setOnClickListener {
             hideQuestion()

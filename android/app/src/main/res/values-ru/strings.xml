@@ -15,7 +15,7 @@
     <string name="tab_home">Главная</string>
     <string name="tab_chat">Чат</string>
     <string name="tab_ground">Опора</string>
-    <string name="tab_stats">Статистика</string>
+    <string name="tab_stats">Прогресс</string>
 
     <string name="chat_placeholder">Расскажи, как ты…</string>
     <string name="chat_send">Отправить</string>

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- distraction questions shown by the overlay -->
+    <string-array name="distraction_questions">
+        <item>What kind of weather do you like most?</item>
+        <item>If you could teleport anywhere right now, where would you go?</item>
+        <item>What song has been stuck in your head lately?</item>
+        <item>What smell instantly reminds you of childhood?</item>
+        <item>If animals could talk, which would be the rudest?</item>
+        <item>What\'s the best gift you\'ve ever received?</item>
+        <item>Which fictional place would you move to?</item>
+        <item>What tiny sound do you find weirdly satisfying?</item>
+        <item>If your week had a colour, what would it be?</item>
+        <item>What\'s something you\'re curious about right now?</item>
+        <item>Which board game could you play forever?</item>
+        <item>What would your autobiography be called?</item>
+        <item>If you had a boat, what would you name it?</item>
+        <item>What\'s the strangest dream you remember?</item>
+        <item>Sunrise or sunset — and why?</item>
+        <item>What superpower would be useless but fun?</item>
+        <item>What dish could you cook with your eyes closed?</item>
+        <item>If today were a movie genre, which one?</item>
+        <item>What\'s the softest thing you\'ve ever touched?</item>
+        <item>Which language would you learn overnight if you could?</item>
+        <item>What game did you invent as a kid?</item>
+        <item>If clouds had flavours, what would today\'s taste like?</item>
+        <item>What\'s a word you love saying out loud?</item>
+        <item>Which museum would you sleep over in?</item>
+        <item>What would you ask a time traveller from 3026?</item>
+        <item>What\'s your favourite sound in nature?</item>
+        <item>If you opened a tiny shop, what would it sell?</item>
+        <item>What\'s the best view you\'ve ever seen?</item>
+        <item>Which cartoon character would be your roommate?</item>
+        <item>What hobby would you try if no one was watching?</item>
+    </string-array>
+
+    <!-- grounding techniques: title, summary, then steps -->
+    <string name="tech_54321_title">5-4-3-2-1 senses</string>
+    <string name="tech_54321_summary">Anchor yourself through your five senses.</string>
+    <string-array name="tech_54321_steps">
+        <item>Name 5 things you can see around you.</item>
+        <item>Name 4 things you can physically feel.</item>
+        <item>Name 3 things you can hear right now.</item>
+        <item>Name 2 things you can smell.</item>
+        <item>Name 1 thing you can taste.</item>
+    </string-array>
+
+    <string name="tech_box_breath_title">Box breathing</string>
+    <string name="tech_box_breath_summary">Slow, even breaths to settle your body.</string>
+    <string-array name="tech_box_breath_steps">
+        <item>Breathe in through your nose for 4 counts.</item>
+        <item>Hold your breath for 4 counts.</item>
+        <item>Breathe out slowly for 4 counts.</item>
+        <item>Hold empty for 4 counts.</item>
+        <item>Repeat the square 4 more times.</item>
+    </string-array>
+
+    <string name="tech_cold_water_title">Cool reset</string>
+    <string name="tech_cold_water_summary">Temperature shift interrupts the stress loop.</string>
+    <string-array name="tech_cold_water_steps">
+        <item>Go to the nearest sink.</item>
+        <item>Run cool water over your wrists for 30 seconds.</item>
+        <item>Notice the temperature changing on your skin.</item>
+        <item>Pat your face gently with cool hands.</item>
+    </string-array>
+
+    <string name="tech_body_scan_title">Feet on the floor</string>
+    <string name="tech_body_scan_summary">Return attention to physical support.</string>
+    <string-array name="tech_body_scan_steps">
+        <item>Press both feet firmly into the floor.</item>
+        <item>Notice the weight of your body on the chair.</item>
+        <item>Unclench your jaw and drop your shoulders.</item>
+        <item>Push your palms together for 5 seconds, then release.</item>
+    </string-array>
+
+    <string name="tech_categories_title">Category sprint</string>
+    <string name="tech_categories_summary">Give the racing mind a neutral job.</string>
+    <string-array name="tech_categories_steps">
+        <item>Pick a category: cities, animals, or films.</item>
+        <item>Name one item for every letter from A to J.</item>
+        <item>Stuck on a letter? Skip it, keep moving.</item>
+        <item>Notice how your breathing slowed down.</item>
+    </string-array>
+
+    <!-- chat replies (rule engine picks by matched topic) -->
+    <string name="chat_crisis">I\'m really glad you told me. This is bigger than what I can hold, and you deserve real support. Please reach out right now to someone you trust or a crisis line in your country — you can find one at findahelpline.com. I\'ll stay here with you meanwhile.</string>
+    <string-array name="chat_anxiety">
+        <item>That sounds really heavy. Let\'s slow things down together — try breathing in for 4 counts and out for 6. Want a grounding exercise?</item>
+        <item>Anxiety lies about how urgent everything is. You\'re safe in this moment. Can you name 3 things you can see right now?</item>
+    </string-array>
+    <string-array name="chat_trigger">
+        <item>It makes sense that it shook you — that content is designed to hook. You noticed it, and that\'s the skill that matters. Shall we do a quick reset?</item>
+        <item>Good on you for stepping away. The urge fades faster when we give attention somewhere else. What\'s one thing nearby that feels pleasant to look at?</item>
+    </string-array>
+    <string-array name="chat_guilt">
+        <item>Guilt after eating is a symptom talking, not the truth. Food is not a moral act. You did something your body needed.</item>
+        <item>You deserve kindness from yourself, especially now. If a friend said this about themselves, what would you tell them?</item>
+    </string-array>
+    <string-array name="chat_urge">
+        <item>Thank you for saying it out loud — urges lose power when they\'re named. They peak and pass, usually within 20-30 minutes. Can we ride this one out together?</item>
+        <item>An urge is a wave, not a command. Let\'s find something for your hands: tea, a shower, a message to a friend?</item>
+    </string-array>
+    <string-array name="chat_greeting_reply">
+        <item>Hey, good to see you. How are you feeling right now, honestly?</item>
+        <item>Hi! I\'m here. What\'s going on today?</item>
+    </string-array>
+    <string-array name="chat_thanks">
+        <item>I\'m glad. You did the work — I just kept you company.</item>
+        <item>Any time. Checking in like this is a real recovery skill.</item>
+    </string-array>
+    <string-array name="chat_fallback">
+        <item>I hear you. Tell me a bit more about what that feels like?</item>
+        <item>That matters. What do you think your body is asking for right now — rest, warmth, company?</item>
+        <item>I\'m listening. Would a grounding exercise help while we talk?</item>
+    </string-array>
+</resources>

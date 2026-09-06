@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -32,9 +33,11 @@ import com.samind.app.content.GroundingTechniques
 
 @Composable
 fun GroundingScreen(initialTechniqueId: String? = null) {
+    val context = LocalContext.current
+    val techniques = remember(context) { GroundingTechniques.all(context) }
     // deep link support: the overlay (and tests) can open one technique directly
     var active by remember {
-        mutableStateOf(initialTechniqueId?.let { GroundingTechniques.byId(it) })
+        mutableStateOf(initialTechniqueId?.let { GroundingTechniques.byId(context, it) })
     }
 
     active?.let { technique ->
@@ -48,7 +51,7 @@ fun GroundingScreen(initialTechniqueId: String? = null) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        items(GroundingTechniques.all) { technique ->
+        items(techniques) { technique ->
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
                     Text(technique.title, style = MaterialTheme.typography.titleLarge)
