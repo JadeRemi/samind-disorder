@@ -17,6 +17,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -52,7 +54,7 @@ fun SwipeToggle(
     val knob = 84.dp
     val scope = rememberCoroutineScope()
     val drag = remember { Animatable(0f) }
-    var trackWidthPx by remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
+    var trackWidthPx by remember { mutableFloatStateOf(0f) }
     val knobPx = with(density) { knob.toPx() }
     val padPx = with(density) { 8.dp.toPx() }
 

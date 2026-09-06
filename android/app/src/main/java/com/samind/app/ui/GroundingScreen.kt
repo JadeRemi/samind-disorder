@@ -119,7 +119,10 @@ fun GroundingScreen(initialTechniqueId: String? = null, onExit: () -> Unit = {})
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (!started) {
-                    PrimaryButton(stringResource(R.string.practice_start)) { started = true }
+                    PrimaryButton(
+                        text = stringResource(R.string.practice_start),
+                        onClick = { started = true },
+                    )
                 } else {
                     PrimaryButton(
                         stringResource(R.string.practice_next),

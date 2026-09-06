@@ -145,9 +145,10 @@ fun BreathingScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (!started) {
-                    PrimaryButton(stringResource(R.string.practice_start)) {
-                        started = true; running = true
-                    }
+                    PrimaryButton(
+                        text = stringResource(R.string.practice_start),
+                        onClick = { started = true; running = true },
+                    )
                 } else {
                     // one button that relabels — never a second button
                     PrimaryButton(

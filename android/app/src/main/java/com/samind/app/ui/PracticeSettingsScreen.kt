@@ -94,10 +94,13 @@ fun PracticeSettingsScreen(onDone: () -> Unit) {
                 }
             }
             Column(Modifier.padding(ScreenMargin)) {
-                PrimaryButton(stringResource(R.string.settings_save)) {
-                    Prefs.setPractice(context, technique, minutes)
-                    onDone()
-                }
+                PrimaryButton(
+                    text = stringResource(R.string.settings_save),
+                    onClick = {
+                        Prefs.setPractice(context, technique, minutes)
+                        onDone()
+                    },
+                )
             }
             Spacer(Modifier.height(24.dp))
         }
