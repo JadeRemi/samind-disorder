@@ -6,7 +6,6 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,39 +27,32 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.samind.app.R
 import com.samind.app.practice.BreathPattern
 import com.samind.app.practice.BreathPhase
+import com.samind.app.ui.components.BreathingSquare
 import com.samind.app.ui.components.CompletionDialog
 import com.samind.app.ui.components.PrimaryButton
 import com.samind.app.ui.components.SamindBackground
 import com.samind.app.ui.components.SamindTopBar
 import com.samind.app.ui.components.ScreenMargin
-import com.samind.app.ui.theme.Neutral900
-import com.samind.app.ui.theme.Primary200
 import com.samind.app.ui.theme.Primary900
 import kotlinx.coroutines.delay
-import kotlin.math.roundToInt
-
-private const val TICK_MS = 16L
+import kotlin.math.ceil
 
 /**
- * Box breathing. Design rules honoured here:
- *  - each side fills continuously in real time, never stepped per second;
- *  - the phase label changes at the same instant the active side changes
- *    (both read the same clock, so they cannot drift);
- *  - pausing freezes the fill exactly where it is and blinks the timer at 1 Hz;
- *  - the same button relabels Pause <-> Continue, it is not replaced.
+ * Layout follows the design frames exactly: phase label large and centred above
+ * the figure, the counter inside it, timer just above the two stacked buttons.
  */
 @Composable
 fun BreathingScreen(
     patternId: String = BreathPattern.BOX_4444.id,
     sessionMinutes: Int = 10,
     onExit: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
 ) {
     val pattern = remember(patternId) { BreathPattern.byId(patternId) }
     val total = sessionMinutes * 60f
@@ -72,7 +64,7 @@ fun BreathingScreen(
     LaunchedEffect(running) {
         var last = System.nanoTime()
         while (running) {
-            delay(TICK_MS)
+            delay(16)
             val now = System.nanoTime()
             elapsed = (elapsed + (now - last) / 1_000_000_000f).coerceAtMost(total)
             last = now
@@ -81,9 +73,9 @@ fun BreathingScreen(
     }
 
     val (phase, fraction) = pattern.at(elapsed)
-    val remaining = (total - elapsed).roundToInt()
+    val remaining = (total - elapsed).toInt()
 
-    // paused timer blinks ~1 Hz
+    // paused: the timer blinks ~1 Hz while the figure freezes
     val blink = rememberInfiniteTransition(label = "blink")
     val blinkAlpha by blink.animateFloat(
         1f, 0.25f,
@@ -94,54 +86,66 @@ fun BreathingScreen(
 
     SamindBackground {
         Column(Modifier.fillMaxSize()) {
-            SamindTopBar(stringResource(R.string.practice_breathing), onBack = onExit)
+            SamindTopBar(
+                stringResource(R.string.practice_breathing),
+                onBack = onExit,
+                actionIcon = R.drawable.ic_sliders,
+                onAction = onOpenSettings,
+            )
 
+            Spacer(Modifier.height(24.dp))
+            Text(
+                if (started) {
+                    stringResource(
+                        when (phase) {
+                            BreathPhase.INHALE -> R.string.phase_inhale
+                            BreathPhase.HOLD -> R.string.phase_hold
+                            BreathPhase.EXHALE -> R.string.phase_exhale
+                            BreathPhase.WAIT -> R.string.phase_wait
+                        },
+                    )
+                } else {
+                    ""
+                },
+                style = MaterialTheme.typography.displayMedium,
+                color = Primary900,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Spacer(Modifier.height(16.dp))
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 32.dp),
+                    .padding(horizontal = 28.dp)
+                    .aspectRatio(1f),
                 contentAlignment = Alignment.Center,
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        stringResource(
-                            when (phase) {
-                                BreathPhase.INHALE -> R.string.phase_inhale
-                                BreathPhase.HOLD -> R.string.phase_hold
-                                BreathPhase.EXHALE -> R.string.phase_exhale
-                                BreathPhase.WAIT -> R.string.phase_wait
-                            },
-                        ),
-                        style = MaterialTheme.typography.displayMedium,
-                        color = Neutral900,
-                        modifier = Modifier.alpha(if (started) 1f else 0f),
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    Box(contentAlignment = Alignment.Center) {
-                        BreathingSquare(phase, fraction, Modifier.fillMaxWidth().aspectRatio(1f))
-                        val secondsLeft = pattern.seconds[phase.ordinal] * (1f - fraction)
-                        Text(
-                            if (started) secondsLeft.roundToInt().coerceAtLeast(1).toString()
-                            else pattern.seconds.first().toString(),
-                            style = MaterialTheme.typography.displayLarge,
-                            color = Neutral900,
-                        )
-                    }
-                }
+                BreathingSquare(phase, if (started) fraction else 0f, Modifier.fillMaxSize())
+                val secondsLeft = pattern.seconds[phase.ordinal] * (1f - fraction)
+                Text(
+                    if (started) {
+                        ceil(secondsLeft).toInt().coerceAtLeast(1).toString()
+                    } else {
+                        pattern.seconds.first().toString()
+                    },
+                    style = MaterialTheme.typography.displayLarge,
+                    color = Primary900,
+                )
             }
 
+            Spacer(Modifier.weight(1f))
             Text(
                 "%02d:%02d".format(remaining / 60, remaining % 60),
                 style = MaterialTheme.typography.titleMedium,
-                color = Neutral900,
+                color = Primary900,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().alpha(timerAlpha),
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(14.dp))
 
             Column(
-                Modifier.padding(horizontal = ScreenMargin, vertical = 12.dp),
+                Modifier.padding(horizontal = ScreenMargin),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (!started) {
@@ -150,9 +154,8 @@ fun BreathingScreen(
                         onClick = { started = true; running = true },
                     )
                 } else {
-                    // one button that relabels — never a second button
                     PrimaryButton(
-                        stringResource(
+                        text = stringResource(
                             if (running) R.string.practice_pause else R.string.practice_continue,
                         ),
                         onClick = { running = !running },
@@ -161,7 +164,7 @@ fun BreathingScreen(
                     PrimaryButton(stringResource(R.string.practice_finish), onExit)
                 }
             }
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(28.dp))
         }
 
         if (finished) {
@@ -172,38 +175,5 @@ fun BreathingScreen(
                 onFinish = onExit,
             )
         }
-    }
-}
-
-/** Four sides; only the active one animates, previous sides stay filled. */
-@Composable
-private fun BreathingSquare(phase: BreathPhase, fraction: Float, modifier: Modifier) {
-    Canvas(modifier) {
-        val stroke = 18.dp.toPx()
-        val inset = stroke / 2
-        val w = size.width - stroke
-        val h = size.height - stroke
-        val corners = listOf(
-            Offset(inset, inset) to Offset(inset + w, inset),          // top: inhale
-            Offset(inset + w, inset) to Offset(inset + w, inset + h),  // right: hold
-            Offset(inset + w, inset + h) to Offset(inset, inset + h),  // bottom: exhale
-            Offset(inset, inset + h) to Offset(inset, inset),          // left: wait
-        )
-        corners.forEach { (from, to) ->
-            drawLine(Primary200, from, to, strokeWidth = stroke, cap = androidx.compose.ui.graphics.StrokeCap.Round)
-        }
-        val active = phase.ordinal
-        for (index in 0 until active) {
-            val (from, to) = corners[index]
-            drawLine(Primary900, from, to, strokeWidth = stroke, cap = androidx.compose.ui.graphics.StrokeCap.Round)
-        }
-        val (from, to) = corners[active]
-        drawLine(
-            Primary900,
-            from,
-            Offset(from.x + (to.x - from.x) * fraction, from.y + (to.y - from.y) * fraction),
-            strokeWidth = stroke,
-            cap = androidx.compose.ui.graphics.StrokeCap.Round,
-        )
     }
 }

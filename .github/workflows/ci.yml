@@ -101,8 +101,13 @@ jobs:
       - name: Validate UI evidence
         if: always()
         run: |
-          pip install --quiet pillow
+          pip install --quiet pillow numpy
           python android/scripts/check-evidence.py behavior-artifacts
+
+      # design parity: SSIM of each captured screen against its Figma frame
+      - name: Design parity report
+        if: always()
+        run: python android/scripts/check-parity.py behavior-artifacts android/parity-refs
       # screenshots of every UI state + logcat, pass or fail
       - uses: actions/upload-artifact@v4
         if: always()

@@ -33,13 +33,34 @@ val SemanticError = Color(0xFFBA1A1A)
 
 val NunitoSans = FontFamily(Font(R.font.nunito_sans))
 
-// control fills are gradients throughout the design, never flat
+// Frosted glass over the photograph — measured from the 2x design exports.
+// Controls are translucent white, not solid green.
 object SamindGradients {
+    val frostedControl = Brush.verticalGradient(
+        listOf(Color(0xE6F3F8F1), Color(0xCCDCE9DD)),
+    )
+    val frostedDisabled = Brush.verticalGradient(
+        listOf(Color(0xB3F2F4F2), Color(0x99DEE2DE)),
+    )
+    val frostedCard = Brush.linearGradient(
+        listOf(Color(0xF2F7FAF6), Color(0xD9DCEADD)),
+    )
+    val itemChecked = Brush.verticalGradient(
+        listOf(Color(0xFFD9DEE0), Color(0xFFBFC7CA)),
+    )
+    val itemUnchecked = Brush.verticalGradient(
+        listOf(Color(0xCCF4F7F4), Color(0xB3DDE4DE)),
+    )
+    val navBar = Brush.verticalGradient(
+        listOf(Color(0xE6F1F6F0), Color(0xCCD9E7DB)),
+    )
+
+    // kept for the overlay and legacy call sites
     val controlActive = Brush.verticalGradient(
-        listOf(Color(0xFFDCE8DD), Color(0xFFBDD2C0)),
+        listOf(Color(0xE6F3F8F1), Color(0xCCDCE9DD)),
     )
     val controlDisabled = Brush.verticalGradient(
-        listOf(Color(0xFFE9E9E9), Color(0xFFD6D6D6)),
+        listOf(Color(0xB3F2F4F2), Color(0x99DEE2DE)),
     )
     val controlProcess = Brush.verticalGradient(
         listOf(Color(0xFFDCE6F5), Color(0xFFC3D3EC)),
@@ -94,8 +115,10 @@ private fun nunito(weight: Int, size: Int, line: Int) = TextStyle(
 )
 
 private val typography = Typography(
-    displayLarge = nunito(900, 100, 120),   // practice counters
-    displayMedium = nunito(400, 36, 43),    // Text 4
+    displayLarge = nunito(900, 100, 110),   // practice counters
+    displayMedium = nunito(300, 44, 52),    // phase label / screen headline
+    displaySmall = nunito(400, 32, 38),     // practice card title
+    headlineSmall = nunito(400, 21, 25),    // top app bar title
     headlineMedium = nunito(600, 24, 29),
     titleLarge = nunito(600, 18, 22),       // Text 1 SemiBold
     titleMedium = nunito(600, 16, 19),      // Text 2

@@ -27,31 +27,25 @@ fun PracticesScreen(
 ) {
     SamindBackground {
         Column(Modifier.fillMaxSize()) {
-            SamindTopBar(
-                stringResource(R.string.tab_practices),
-                actionIcon = R.drawable.ic_tab_settings,
-                onAction = onOpenSettings,
-            )
+            // the design's Practices header has no buttons — title only
+            SamindTopBar(stringResource(R.string.tab_practices))
             Column(
                 Modifier
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = ScreenMargin, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp),
             ) {
                 PracticeCard(
                     title = stringResource(R.string.practice_grounding),
                     supporting = stringResource(R.string.practice_grounding_sub),
                     onStart = onOpenGrounding,
                 )
+                // "Breathing practices" is a category: it opens the practice
+                // whose technique is currently selected in settings
                 PracticeCard(
-                    title = stringResource(R.string.practice_breathing),
+                    title = stringResource(R.string.practice_breathing_group),
                     supporting = stringResource(R.string.practice_breathing_sub),
                     onStart = onOpenBreathing,
-                )
-                PracticeCard(
-                    title = stringResource(R.string.practice_eights),
-                    supporting = stringResource(R.string.practice_eights_sub),
-                    onStart = onOpenEights,
                 )
                 Spacer(Modifier.height(110.dp))
             }

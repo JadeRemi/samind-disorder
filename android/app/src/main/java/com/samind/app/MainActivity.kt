@@ -94,11 +94,20 @@ class MainActivity : ComponentActivity() {
                             GroundingScreen(technique) { navController.popBackStack() }
                         }
                         composable(BREATHE) {
-                            BreathingScreen(
-                                patternId = Prefs.technique(this@MainActivity),
-                                sessionMinutes = Prefs.minutes(this@MainActivity),
-                                onExit = { navController.popBackStack() },
-                            )
+                            // the eights technique has its own screen
+                            if (Prefs.technique(this@MainActivity) == "0-8-16-32") {
+                                CountEightsScreen(
+                                    sessionMinutes = Prefs.minutes(this@MainActivity),
+                                    onExit = { navController.popBackStack() },
+                                )
+                            } else {
+                                BreathingScreen(
+                                    patternId = Prefs.technique(this@MainActivity),
+                                    sessionMinutes = Prefs.minutes(this@MainActivity),
+                                    onExit = { navController.popBackStack() },
+                                    onOpenSettings = { navController.navigate(PRACTICE_SETTINGS) },
+                                )
+                            }
                         }
                         composable(EIGHTS) {
                             CountEightsScreen(

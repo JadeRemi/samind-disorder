@@ -109,4 +109,5 @@
     <string name="settings_name">Your name</string>
     <string name="settings_version">Version %1$s</string>
     <string name="settings_open_accessibility">Accessibility settings</string>
+    <string name="practice_breathing_group">Breathing practices</string>
 </resources>

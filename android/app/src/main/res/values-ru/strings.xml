@@ -108,4 +108,5 @@
     <string name="settings_name">Твоё имя</string>
     <string name="settings_version">Версия %1$s</string>
     <string name="settings_open_accessibility">Настройки доступности</string>
+    <string name="practice_breathing_group">Дыхательные практики</string>
 </resources>
