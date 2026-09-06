@@ -37,9 +37,16 @@ import com.samind.app.ui.theme.SamindGradients
 
 /** Nickname-only onboarding. No account, no password (design). */
 @Composable
-fun SignInScreen(onDone: () -> Unit) {
+fun SignInScreen(designState: String? = null, onDone: () -> Unit) {
     val context = LocalContext.current
-    var name by remember { mutableStateOf(Prefs.displayName(context)) }
+    var name by remember {
+        mutableStateOf(
+            when (designState) {
+                DesignState.TYPED -> "Anna"
+                else -> Prefs.displayName(context)
+            },
+        )
+    }
 
     SamindBackground(signIn = true) {
         Column(

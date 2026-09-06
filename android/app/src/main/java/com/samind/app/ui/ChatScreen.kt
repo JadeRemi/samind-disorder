@@ -50,6 +50,7 @@ import com.samind.app.chat.ChatMessage
 import com.samind.app.data.Prefs
 import com.samind.app.ui.components.CircleIconButton
 import com.samind.app.ui.components.EmptyState
+import com.samind.app.ui.components.TypingIndicator
 import com.samind.app.ui.components.PillShape
 import com.samind.app.ui.components.SamindBackground
 import com.samind.app.ui.components.SamindTopBar
@@ -57,16 +58,36 @@ import com.samind.app.ui.components.ScreenMargin
 import com.samind.app.ui.theme.Neutral900
 import com.samind.app.ui.theme.SamindGradients
 
+private const val SEED_USER = "I'm scared I won't cope"
+
 private val SUGGESTIONS = listOf(
     R.string.chat_chip_1, R.string.chat_chip_2, R.string.chat_chip_3,
     R.string.chat_chip_4, R.string.chat_chip_5, R.string.chat_chip_6,
 )
 
 @Composable
-fun ChatScreen() {
+fun ChatScreen(designState: String? = null) {
     val context = LocalContext.current
     val engine = remember(context) { ChatEngine(context) }
-    val messages = remember { mutableStateListOf<ChatMessage>() }
+    // debug states let every chat frame in the design be photographed
+    val messages = remember {
+        mutableStateListOf<ChatMessage>().apply {
+            when (designState) {
+                DesignState.MESSAGE -> add(ChatMessage(true, SEED_USER))
+                DesignState.REPLY, DesignState.LOADING -> {
+                    add(ChatMessage(true, SEED_USER))
+                    if (designState == DesignState.REPLY) {
+                        add(ChatMessage(false, engine.reply(SEED_USER)))
+                    }
+                }
+                DesignState.SCROLLED -> repeat(6) { index ->
+                    add(ChatMessage(index % 2 == 0, SEED_USER))
+                    add(ChatMessage(false, engine.reply(SEED_USER)))
+                }
+            }
+        }
+    }
+    val loading = designState == DesignState.LOADING
     var input by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
     val name = Prefs.displayName(context)
@@ -116,6 +137,7 @@ fun ChatScreen() {
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
                         items(messages) { message -> MessageRow(message) }
+                        if (loading) item { TypingIndicator() }
                     }
                 }
             }

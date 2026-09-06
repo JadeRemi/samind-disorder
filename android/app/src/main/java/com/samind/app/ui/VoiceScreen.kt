@@ -51,8 +51,12 @@ enum class VoiceState { IDLE, LISTENING, THINKING, SPEAKING, ERROR }
  * between states — only the speed and amplitude of its motion do.
  */
 @Composable
-fun VoiceScreen(onExit: () -> Unit = {}) {
-    var state by remember { mutableStateOf(VoiceState.IDLE) }
+fun VoiceScreen(designState: String? = null, onExit: () -> Unit = {}) {
+    var state by remember {
+        mutableStateOf(
+            if (designState == DesignState.ACTIVE) VoiceState.LISTENING else VoiceState.IDLE,
+        )
+    }
 
     SamindBackground {
         Column(Modifier.fillMaxSize()) {

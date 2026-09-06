@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -19,6 +20,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -36,6 +39,7 @@ import com.samind.app.ui.PracticeSettingsScreen
 import com.samind.app.ui.PracticesScreen
 import com.samind.app.ui.SettingsScreen
 import com.samind.app.ui.CountEightsScreen
+import com.samind.app.ui.DesignState
 import com.samind.app.ui.SignInScreen
 import com.samind.app.ui.VoiceScreen
 import com.samind.app.ui.components.PillShape
@@ -62,6 +66,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val requested = intent.getStringExtra(EXTRA_DESTINATION)
         val technique = intent.getStringExtra(EXTRA_TECHNIQUE)
+        val designState = intent.getStringExtra(DesignState.EXTRA)
 
         setContent {
             SamindTheme {
@@ -78,10 +83,13 @@ class MainActivity : ComponentActivity() {
                 Box(Modifier.fillMaxSize()) {
                     NavHost(navController = navController, startDestination = start) {
                         composable(SIGN_IN) {
-                            SignInScreen(onDone = { navController.navigate(HOME) })
+                            SignInScreen(
+                                designState = designState,
+                                onDone = { navController.navigate(HOME) },
+                            )
                         }
                         composable(HOME) { HomeScreen() }
-                        composable(CHAT) { ChatScreen() }
+                        composable(CHAT) { ChatScreen(designState = designState) }
                         composable(PRACTICES) {
                             PracticesScreen(
                                 onOpenGrounding = { navController.navigate(GROUND) },
@@ -91,19 +99,25 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable(GROUND) {
-                            GroundingScreen(technique) { navController.popBackStack() }
+                            GroundingScreen(
+                                initialTechniqueId = technique,
+                                designState = designState,
+                                onExit = { navController.popBackStack() },
+                            )
                         }
                         composable(BREATHE) {
                             // the eights technique has its own screen
                             if (Prefs.technique(this@MainActivity) == "0-8-16-32") {
                                 CountEightsScreen(
                                     sessionMinutes = Prefs.minutes(this@MainActivity),
+                                    designState = designState,
                                     onExit = { navController.popBackStack() },
                                 )
                             } else {
                                 BreathingScreen(
                                     patternId = Prefs.technique(this@MainActivity),
                                     sessionMinutes = Prefs.minutes(this@MainActivity),
+                                    designState = designState,
                                     onExit = { navController.popBackStack() },
                                     onOpenSettings = { navController.navigate(PRACTICE_SETTINGS) },
                                 )
@@ -112,13 +126,16 @@ class MainActivity : ComponentActivity() {
                         composable(EIGHTS) {
                             CountEightsScreen(
                                 sessionMinutes = Prefs.minutes(this@MainActivity),
+                                designState = designState,
                                 onExit = { navController.popBackStack() },
                             )
                         }
                         composable(PRACTICE_SETTINGS) {
                             PracticeSettingsScreen { navController.popBackStack() }
                         }
-                        composable(VOICE) { VoiceScreen { navController.popBackStack() } }
+                        composable(VOICE) {
+                            VoiceScreen(designState = designState) { navController.popBackStack() }
+                        }
                         composable(SETTINGS) {
                             SettingsScreen(
                                 onOpenAccessibility = {
@@ -175,7 +192,9 @@ private fun BottomPillNav(
             .padding(horizontal = ScreenMargin, vertical = 16.dp)
             .fillMaxWidth()
             .height(68.dp)
-            .background(SamindGradients.controlActive, PillShape),
+            .shadow(8.dp, PillShape, clip = false)
+            .background(SamindGradients.navBar, PillShape)
+            .border(1.dp, Color.White.copy(alpha = 0.5f), PillShape),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         tabs.forEach { (route, icon) ->
@@ -196,8 +215,8 @@ private fun BottomPillNav(
                 Icon(
                     painterResource(icon),
                     contentDescription = stringResource(R.string.app_name),
-                    tint = if (route == current) Primary900 else Neutral900.copy(alpha = 0.45f),
-                    modifier = Modifier.size(24.dp),
+                    tint = if (route == current) Primary900 else Primary900.copy(alpha = 0.38f),
+                    modifier = Modifier.size(23.dp),
                 )
             }
         }

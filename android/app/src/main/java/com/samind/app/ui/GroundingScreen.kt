@@ -39,10 +39,19 @@ import com.samind.app.ui.theme.Primary900
  * above the two stacked buttons.
  */
 @Composable
-fun GroundingScreen(initialTechniqueId: String? = null, onExit: () -> Unit = {}) {
-    var started by remember { mutableStateOf(initialTechniqueId != null) }
-    var step by remember { mutableIntStateOf(0) }
-    var marked by remember { mutableStateOf(setOf<Int>()) }
+fun GroundingScreen(
+    initialTechniqueId: String? = null,
+    designState: String? = null,
+    onExit: () -> Unit = {},
+) {
+    val presetStep = DesignState.groundingStep(designState)
+    var started by remember { mutableStateOf(initialTechniqueId != null || presetStep != null) }
+    var step by remember { mutableIntStateOf(presetStep ?: 0) }
+    var marked by remember {
+        mutableStateOf(
+            DesignState.groundingMarked(designState, GROUNDING_STEP_ITEMS[presetStep ?: 0]),
+        )
+    }
     val done = sessionComplete(step, marked)
 
     SamindBackground {

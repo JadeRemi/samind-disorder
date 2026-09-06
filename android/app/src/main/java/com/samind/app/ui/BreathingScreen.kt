@@ -51,14 +51,18 @@ import kotlin.math.ceil
 fun BreathingScreen(
     patternId: String = BreathPattern.BOX_4444.id,
     sessionMinutes: Int = 10,
+    designState: String? = null,
     onExit: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
 ) {
     val pattern = remember(patternId) { BreathPattern.byId(patternId) }
     val total = sessionMinutes * 60f
-    var elapsed by remember { mutableFloatStateOf(0f) }
-    var running by remember { mutableStateOf(false) }
-    var started by remember { mutableStateOf(false) }
+    val preset = DesignState.breathingElapsed(designState, pattern.seconds)
+    var elapsed by remember { mutableFloatStateOf(preset?.coerceAtMost(total) ?: 0f) }
+    var running by remember {
+        mutableStateOf(preset != null && designState != DesignState.PAUSED && preset < total)
+    }
+    var started by remember { mutableStateOf(preset != null) }
     val finished = elapsed >= total
 
     LaunchedEffect(running) {

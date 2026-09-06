@@ -1,7 +1,5 @@
 package com.samind.app.ui
 
-import android.content.Intent
-import android.provider.Settings
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -50,7 +47,7 @@ fun HomeScreen() {
                 .padding(horizontal = ScreenMargin),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Spacer(Modifier.height(140.dp))
+            Spacer(Modifier.height(150.dp))
 
             Image(
                 painterResource(R.drawable.ic_wordmark),
@@ -95,18 +92,9 @@ fun HomeScreen() {
                 offLabel = stringResource(R.string.enable_monitoring),
                 onLabel = stringResource(R.string.monitoring_on),
             )
-            Spacer(Modifier.height(12.dp))
-            Text(
-                stringResource(R.string.accessibility_hint),
-                style = MaterialTheme.typography.labelSmall,
-                color = Neutral900,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.clickable {
-                    context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                },
-            )
-            Spacer(Modifier.height(24.dp))
+            // clearance for the floating nav pill (68 dp + 16 dp margins):
+            // the hint used to render behind it
+            Spacer(Modifier.height(116.dp))
         }
     }
-    Spacer(Modifier.width(0.dp))
 }

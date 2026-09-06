@@ -173,7 +173,7 @@ fun PracticeCard(
     onStart: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    Column(
         modifier
             .fillMaxWidth()
             .height(157.dp)
@@ -186,23 +186,18 @@ fun PracticeCard(
             title,
             style = MaterialTheme.typography.displaySmall,
             color = Primary900,
-            modifier = Modifier.align(Alignment.TopStart),
+            maxLines = 1,
         )
-        Text(
-            supporting,
-            style = MaterialTheme.typography.bodySmall,
-            color = Primary900.copy(alpha = 0.85f),
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(end = 72.dp),
-        )
-        CircleIconButton(
-            R.drawable.ic_chevron_right,
-            "Start",
-            onStart,
-            Modifier.align(Alignment.BottomEnd),
-            size = 52.dp,
-        )
+        Spacer(Modifier.weight(1f))
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                supporting,
+                style = MaterialTheme.typography.bodySmall,
+                color = Primary900.copy(alpha = 0.85f),
+                modifier = Modifier.weight(1f).padding(end = 16.dp, bottom = 4.dp),
+            )
+            CircleIconButton(R.drawable.ic_chevron_right, "Start", onStart, size = 52.dp)
+        }
     }
 }
 

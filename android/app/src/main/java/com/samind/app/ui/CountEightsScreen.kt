@@ -46,12 +46,21 @@ import kotlin.math.roundToInt
  * with the chosen session length (design annotation).
  */
 @Composable
-fun CountEightsScreen(sessionMinutes: Int = 10, onExit: () -> Unit = {}) {
+fun CountEightsScreen(
+    sessionMinutes: Int = 10,
+    designState: String? = null,
+    onExit: () -> Unit = {},
+) {
     val pattern = BreathPattern.EIGHTS
     val total = sessionMinutes * 60f
-    var elapsed by remember { mutableFloatStateOf(0f) }
-    var running by remember { mutableStateOf(false) }
-    var started by remember { mutableStateOf(false) }
+    val preset = when (designState) {
+        DesignState.ACTIVE -> total * 0.38f
+        DesignState.DONE -> total
+        else -> null
+    }
+    var elapsed by remember { mutableFloatStateOf(preset ?: 0f) }
+    var running by remember { mutableStateOf(preset != null && preset < total) }
+    var started by remember { mutableStateOf(preset != null) }
     val finished = elapsed >= total
 
     LaunchedEffect(running) {

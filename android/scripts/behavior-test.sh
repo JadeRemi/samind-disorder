@@ -233,12 +233,51 @@ for lang in en ru; do
 done
 adb shell cmd locale set-app-locales "$PKG" --locales en >/dev/null 2>&1 || true
 
-echo "=== capture: practice screens"
-for route in signin ground breathe eights practice_settings voice; do
+echo "=== capture: every design state"
+# each entry: <slug>|<destination>|<extra state flag>
+# the app exposes a debug-only `state` extra so every design frame can be
+# photographed deterministically, without scripted taps
+STATES="
+screen_signin|signin|
+signin_focused|signin|focused
+signin_typing|signin|typed
+screen_ground|ground|
+ground_step1|ground|step1
+ground_step1_filled|ground|step1_filled
+ground_step2|ground|step2
+ground_step3|ground|step3
+ground_step4|ground|step4
+ground_step5|ground|step5
+ground_done|ground|done
+screen_breathe|breathe|
+breathe_inhale|breathe|inhale
+breathe_hold|breathe|hold
+breathe_exhale|breathe|exhale
+breathe_wait|breathe|wait
+breathe_paused|breathe|paused
+breathe_done|breathe|done
+screen_eights|eights|
+eights_active|eights|active
+eights_done|eights|done
+screen_practice_settings|practice_settings|
+screen_voice|voice|
+voice_active|voice|active
+chat_message|chat|message
+chat_reply|chat|reply
+chat_loading|chat|loading
+chat_composer_focused|chat|focused
+chat_scrolled|chat|scrolled
+"
+echo "$STATES" | while IFS='|' read -r slug route state; do
+  [ -z "$slug" ] && continue
   adb shell am force-stop "$PKG" >/dev/null 2>&1 || true
-  adb shell am start -n "$PKG/.MainActivity" --es destination "$route" >/dev/null
-  sleep 5
-  snap "screen_$route" "$route screen (redesign)"
+  if [ -n "$state" ]; then
+    adb shell am start -n "$PKG/.MainActivity" --es destination "$route" --es state "$state" >/dev/null
+  else
+    adb shell am start -n "$PKG/.MainActivity" --es destination "$route" >/dev/null
+  fi
+  sleep 4
+  snap "$slug" "$route / ${state:-default}"
 done
 
 echo "BEHAVIOR TEST PASSED"

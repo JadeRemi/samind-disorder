@@ -11,21 +11,19 @@ import android.os.Looper
 import android.util.Log
 import android.view.Display
 import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
-import android.widget.Button
-import android.widget.TextView
 import com.samind.app.MainActivity
-import com.samind.app.R
 import com.samind.app.content.DistractionQuestions
 
+/**
+ * Owns the two overlay windows. Both are Compose, built from the shared UI kit
+ * — nothing here styles anything on its own.
+ */
 class OverlayController(private val service: AccessibilityService) {
 
-    // API 30+ needs a window context for TYPE_ACCESSIBILITY_OVERLAY (the plain service
-    // context yields an invalid token), and that window context can only be created
-    // from a display context — a service context has no display of its own.
+    // API 30+ needs a window context for TYPE_ACCESSIBILITY_OVERLAY, and that
+    // context can only come from a display context.
     private val overlayContext: Context = try {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val display = service.getSystemService(DisplayManager::class.java)
@@ -43,18 +41,21 @@ class OverlayController(private val service: AccessibilityService) {
     }
 
     private val windowManager = overlayContext.getSystemService(WindowManager::class.java)
-    private val inflater = LayoutInflater.from(overlayContext)
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private var mascotView: View? = null
     private var questionView: View? = null
+    private var mascotHost: OverlayHost? = null
+    private var questionHost: OverlayHost? = null
 
-    val isQuestionShowing: Boolean
-        get() = questionView != null
+    val isQuestionShowing: Boolean get() = questionView != null
 
     fun showMascot() = mainHandler.post {
         if (mascotView != null) return@post
-        val view = inflater.inflate(R.layout.overlay_mascot, null)
+        val host = OverlayHost()
+        val view = host.createView(overlayContext) {
+            MascotBubble(onTap = { openApp(MainActivity.CHAT) })
+        }
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -66,26 +67,29 @@ class OverlayController(private val service: AccessibilityService) {
             x = 16
             y = 240
         }
-        makeDraggable(view, params)
-        view.setOnClickListener { openApp("chat") }
-        // an overlay failure must never take the monitoring service down with it
         try {
             windowManager.addView(view, params)
             mascotView = view
+            mascotHost = host
         } catch (e: Exception) {
+            host.destroy()
             Log.e(TAG, "could not add mascot overlay", e)
         }
     }
 
     fun showQuestion() = mainHandler.post {
         if (questionView != null) return@post
-        val view = inflater.inflate(R.layout.overlay_question, null)
-        view.findViewById<TextView>(R.id.question_text).text =
-            DistractionQuestions.random(overlayContext)
-        view.findViewById<Button>(R.id.dismiss_button).setOnClickListener { hideQuestion() }
-        view.findViewById<Button>(R.id.open_button).setOnClickListener {
-            hideQuestion()
-            openApp("ground")
+        val host = OverlayHost()
+        val question = DistractionQuestions.random(overlayContext)
+        val view = host.createView(overlayContext) {
+            InterventionOverlay(
+                question = question,
+                onRefocus = {
+                    hideQuestion()
+                    openApp(MainActivity.PRACTICES)
+                },
+                onDismiss = { hideQuestion() },
+            )
         }
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
@@ -97,20 +101,26 @@ class OverlayController(private val service: AccessibilityService) {
         try {
             windowManager.addView(view, params)
             questionView = view
+            questionHost = host
             Log.i(TAG, "question overlay shown")
         } catch (e: Exception) {
+            host.destroy()
             Log.e(TAG, "could not add question overlay", e)
         }
     }
 
     fun hideQuestion() = mainHandler.post {
         questionView?.let { runCatching { windowManager.removeView(it) } }
+        questionHost?.destroy()
         questionView = null
+        questionHost = null
     }
 
     fun hideMascot() = mainHandler.post {
         mascotView?.let { runCatching { windowManager.removeView(it) } }
+        mascotHost?.destroy()
         mascotView = null
+        mascotHost = null
     }
 
     fun hideAll() {
@@ -128,41 +138,5 @@ class OverlayController(private val service: AccessibilityService) {
 
     private companion object {
         const val TAG = "OverlayController"
-    }
-
-    private fun makeDraggable(view: View, params: WindowManager.LayoutParams) {
-        var startX = 0
-        var startY = 0
-        var touchX = 0f
-        var touchY = 0f
-        var moved = false
-        view.setOnTouchListener { v, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    startX = params.x
-                    startY = params.y
-                    touchX = event.rawX
-                    touchY = event.rawY
-                    moved = false
-                    true
-                }
-                MotionEvent.ACTION_MOVE -> {
-                    params.x = startX - (event.rawX - touchX).toInt()
-                    params.y = startY + (event.rawY - touchY).toInt()
-                    if (kotlin.math.abs(event.rawX - touchX) > 24 ||
-                        kotlin.math.abs(event.rawY - touchY) > 24
-                    ) {
-                        moved = true
-                    }
-                    windowManager.updateViewLayout(v, params)
-                    true
-                }
-                MotionEvent.ACTION_UP -> {
-                    if (!moved) v.performClick()
-                    true
-                }
-                else -> false
-            }
-        }
     }
 }
